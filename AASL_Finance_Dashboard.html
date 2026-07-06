@@ -135,6 +135,7 @@
     <div class="brand">
       <div class="name">AASL Deep Dive</div>
       <div class="sub mono">AKIJ AIR SERVICE LTD · BU-245</div>
+      <div class="sub mono" id="liveStatus" style="margin-top:6px; color:#B8933F;">Connecting to database…</div>
     </div>
     <div class="segment-label">Segment 1 — Finance</div>
     <div id="nav"></div>
@@ -161,20 +162,123 @@ const groups = [
   {id:12, roman:"XII", title:"Red Flag / Forensic Scan", status:"done"},
 ];
 
-const monthly = [{"period": "2024-02", "clean_revenue": 14536, "wallet_mechanic": 33989.0, "total_expense": 0, "other_income": 0, "net_result": 14536, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-03", "clean_revenue": -23320.0, "wallet_mechanic": 0, "total_expense": 0, "other_income": 0, "net_result": -23320.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-04", "clean_revenue": -38443.0, "wallet_mechanic": 1098709.0, "total_expense": 0, "other_income": 0, "net_result": -38443.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-05", "clean_revenue": 100582, "wallet_mechanic": 249002.0, "total_expense": 0, "other_income": 0, "net_result": 100582, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-06", "clean_revenue": -101622.0, "wallet_mechanic": 166539, "total_expense": 0, "other_income": 0, "net_result": -101622.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-07", "clean_revenue": 23160.0, "wallet_mechanic": 366259, "total_expense": 0, "other_income": 0, "net_result": 23160.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-08", "clean_revenue": -3598.0, "wallet_mechanic": 28080, "total_expense": 0, "other_income": 0, "net_result": -3598.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-09", "clean_revenue": -78301.0, "wallet_mechanic": 273570.0, "total_expense": 0, "other_income": 0, "net_result": -78301.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-10", "clean_revenue": -353823.0, "wallet_mechanic": 662828, "total_expense": 86686.0, "other_income": 0, "net_result": -440509.0, "selling": 86686.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-11", "clean_revenue": -2689961.0, "wallet_mechanic": 1059687.0, "total_expense": 1038652.0, "other_income": 0, "net_result": -3728613.0, "selling": 1038652.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-12", "clean_revenue": -573190.0, "wallet_mechanic": 625923.0, "total_expense": 511368.0, "other_income": 0, "net_result": -1084558.0, "selling": 511368.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-01", "clean_revenue": 2755100.0, "wallet_mechanic": 6139568.0, "total_expense": 1069910.0, "other_income": 0, "net_result": 1685190.0, "selling": 1069910.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-02", "clean_revenue": -3219579.0, "wallet_mechanic": 7295740.0, "total_expense": 1867862.0, "other_income": 0, "net_result": -5087441.0, "selling": 1867862.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-03", "clean_revenue": -1515845.0, "wallet_mechanic": 5222496.0, "total_expense": 2903809.0, "other_income": 0, "net_result": -4419655.0, "selling": 2903809.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-04", "clean_revenue": -2801543.0, "wallet_mechanic": 5294111.0, "total_expense": 2982196.0, "other_income": 0, "net_result": -5783739.0, "selling": 2982196.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-05", "clean_revenue": 9684900.0, "wallet_mechanic": 7572531.0, "total_expense": 5301018.0, "other_income": 0, "net_result": 4383881.0, "selling": 5301018.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-06", "clean_revenue": 7174672.0, "wallet_mechanic": 13664718.0, "total_expense": 8918856.0, "other_income": 0, "net_result": -1744184.0, "selling": 8918856.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-07", "clean_revenue": 12641567.0, "wallet_mechanic": 18285502.0, "total_expense": 26131283.0, "other_income": 0, "net_result": -13489716.0, "selling": 26131283.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-08", "clean_revenue": 8914317.0, "wallet_mechanic": 43203159.0, "total_expense": 20161573.0, "other_income": 0, "net_result": -11247256.0, "selling": 20161573.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-09", "clean_revenue": -9252874.0, "wallet_mechanic": -49862940.0, "total_expense": 15038673.0, "other_income": 0, "net_result": -24291548.0, "selling": 15026757.0, "admin": 0, "operating": 0, "financial": 11917.0, "depreciation": 0, "marketing": 0}, {"period": "2025-10", "clean_revenue": -12691926.0, "wallet_mechanic": 24712196.0, "total_expense": 13813995.0, "other_income": 0, "net_result": -26505921.0, "selling": 13801681.0, "admin": 0, "operating": 0, "financial": 12314.0, "depreciation": 0, "marketing": 0}, {"period": "2025-11", "clean_revenue": -18231059.0, "wallet_mechanic": 32611029.0, "total_expense": 13469507.0, "other_income": 0, "net_result": -31700566.0, "selling": 13457590.0, "admin": 0, "operating": 0, "financial": 11917.0, "depreciation": 0, "marketing": 0}, {"period": "2025-12", "clean_revenue": -28687953.0, "wallet_mechanic": 18856165.0, "total_expense": 16556492.0, "other_income": 0, "net_result": -45244445.0, "selling": 15186524.0, "admin": 520340.0, "operating": 0, "financial": 849629.0, "depreciation": 0, "marketing": 0}, {"period": "2026-01", "clean_revenue": 13081468.0, "wallet_mechanic": -12212825.0, "total_expense": 7319210.0, "other_income": 0, "net_result": 5762257.0, "selling": 3009026.0, "admin": 1352962.0, "operating": 2342788.0, "financial": 402314.0, "depreciation": 212121.0, "marketing": 0}, {"period": "2026-02", "clean_revenue": -7049571.0, "wallet_mechanic": -17186271.0, "total_expense": 13265496.0, "other_income": 402580.0, "net_result": -19912488.0, "selling": 1936954.0, "admin": 3238291.0, "operating": 7115811.0, "financial": 762318.0, "depreciation": 212121.0, "marketing": 0}, {"period": "2026-03", "clean_revenue": -6754738.0, "wallet_mechanic": 6456577.0, "total_expense": 14073728.0, "other_income": 27494.0, "net_result": -20800972.0, "selling": 2917948.0, "admin": 3208148.0, "operating": 6803451.0, "financial": 909332.0, "depreciation": 234849.0, "marketing": 0}, {"period": "2026-04", "clean_revenue": -6974080.0, "wallet_mechanic": -8397862.0, "total_expense": 12611471.0, "other_income": 472736.0, "net_result": -19112816.0, "selling": 1894912.0, "admin": 1557801.0, "operating": 7045952.0, "financial": 1885533.0, "depreciation": 227273.0, "marketing": 0}, {"period": "2026-05", "clean_revenue": -4378517.0, "wallet_mechanic": -15727942.0, "total_expense": 14954472.0, "other_income": 1975617.0, "net_result": -17357371.0, "selling": 5004132.0, "admin": 3318447.0, "operating": 5381017.0, "financial": 1016028.0, "depreciation": 234849.0, "marketing": 0}, {"period": "2026-06", "clean_revenue": -3970616.0, "wallet_mechanic": -5961248.0, "total_expense": 21982923.0, "other_income": 561891.0, "net_result": -25391648.0, "selling": 4892640.0, "admin": 1604061.0, "operating": 14123205.0, "financial": 1084679.0, "depreciation": 227273.0, "marketing": 51066.0}, {"period": "2026-07", "clean_revenue": -701561.0, "wallet_mechanic": -5732174, "total_expense": 7578521.0, "other_income": 149.0, "net_result": -8279933.0, "selling": 4309841.0, "admin": 386562.0, "operating": 1475229.0, "financial": 185188.0, "depreciation": 37879.0, "marketing": 1183821.0}];
+const FALLBACK_MONTHLY = [{"period": "2024-02", "clean_revenue": 14536, "wallet_mechanic": 33989.0, "total_expense": 0, "other_income": 0, "net_result": 14536, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-03", "clean_revenue": -23320.0, "wallet_mechanic": 0, "total_expense": 0, "other_income": 0, "net_result": -23320.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-04", "clean_revenue": -38443.0, "wallet_mechanic": 1098709.0, "total_expense": 0, "other_income": 0, "net_result": -38443.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-05", "clean_revenue": 100582, "wallet_mechanic": 249002.0, "total_expense": 0, "other_income": 0, "net_result": 100582, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-06", "clean_revenue": -101622.0, "wallet_mechanic": 166539, "total_expense": 0, "other_income": 0, "net_result": -101622.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-07", "clean_revenue": 23160.0, "wallet_mechanic": 366259, "total_expense": 0, "other_income": 0, "net_result": 23160.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-08", "clean_revenue": -3598.0, "wallet_mechanic": 28080, "total_expense": 0, "other_income": 0, "net_result": -3598.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-09", "clean_revenue": -78301.0, "wallet_mechanic": 273570.0, "total_expense": 0, "other_income": 0, "net_result": -78301.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-10", "clean_revenue": -353823.0, "wallet_mechanic": 662828, "total_expense": 86686.0, "other_income": 0, "net_result": -440509.0, "selling": 86686.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-11", "clean_revenue": -2689961.0, "wallet_mechanic": 1059687.0, "total_expense": 1038652.0, "other_income": 0, "net_result": -3728613.0, "selling": 1038652.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-12", "clean_revenue": -573190.0, "wallet_mechanic": 625923.0, "total_expense": 511368.0, "other_income": 0, "net_result": -1084558.0, "selling": 511368.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-01", "clean_revenue": 2755100.0, "wallet_mechanic": 6139568.0, "total_expense": 1069910.0, "other_income": 0, "net_result": 1685190.0, "selling": 1069910.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-02", "clean_revenue": -3219579.0, "wallet_mechanic": 7295740.0, "total_expense": 1867862.0, "other_income": 0, "net_result": -5087441.0, "selling": 1867862.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-03", "clean_revenue": -1515845.0, "wallet_mechanic": 5222496.0, "total_expense": 2903809.0, "other_income": 0, "net_result": -4419655.0, "selling": 2903809.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-04", "clean_revenue": -2801543.0, "wallet_mechanic": 5294111.0, "total_expense": 2982196.0, "other_income": 0, "net_result": -5783739.0, "selling": 2982196.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-05", "clean_revenue": 9684900.0, "wallet_mechanic": 7572531.0, "total_expense": 5301018.0, "other_income": 0, "net_result": 4383881.0, "selling": 5301018.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-06", "clean_revenue": 7174672.0, "wallet_mechanic": 13664718.0, "total_expense": 8918856.0, "other_income": 0, "net_result": -1744184.0, "selling": 8918856.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-07", "clean_revenue": 12641567.0, "wallet_mechanic": 18285502.0, "total_expense": 26131283.0, "other_income": 0, "net_result": -13489716.0, "selling": 26131283.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-08", "clean_revenue": 8914317.0, "wallet_mechanic": 43203159.0, "total_expense": 20161573.0, "other_income": 0, "net_result": -11247256.0, "selling": 20161573.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-09", "clean_revenue": -9252874.0, "wallet_mechanic": -49862940.0, "total_expense": 15038673.0, "other_income": 0, "net_result": -24291548.0, "selling": 15026757.0, "admin": 0, "operating": 0, "financial": 11917.0, "depreciation": 0, "marketing": 0}, {"period": "2025-10", "clean_revenue": -12691926.0, "wallet_mechanic": 24712196.0, "total_expense": 13813995.0, "other_income": 0, "net_result": -26505921.0, "selling": 13801681.0, "admin": 0, "operating": 0, "financial": 12314.0, "depreciation": 0, "marketing": 0}, {"period": "2025-11", "clean_revenue": -18231059.0, "wallet_mechanic": 32611029.0, "total_expense": 13469507.0, "other_income": 0, "net_result": -31700566.0, "selling": 13457590.0, "admin": 0, "operating": 0, "financial": 11917.0, "depreciation": 0, "marketing": 0}, {"period": "2025-12", "clean_revenue": -28687953.0, "wallet_mechanic": 18856165.0, "total_expense": 16556492.0, "other_income": 0, "net_result": -45244445.0, "selling": 15186524.0, "admin": 520340.0, "operating": 0, "financial": 849629.0, "depreciation": 0, "marketing": 0}, {"period": "2026-01", "clean_revenue": 13081468.0, "wallet_mechanic": -12212825.0, "total_expense": 7319210.0, "other_income": 0, "net_result": 5762257.0, "selling": 3009026.0, "admin": 1352962.0, "operating": 2342788.0, "financial": 402314.0, "depreciation": 212121.0, "marketing": 0}, {"period": "2026-02", "clean_revenue": -7049571.0, "wallet_mechanic": -17186271.0, "total_expense": 13265496.0, "other_income": 402580.0, "net_result": -19912488.0, "selling": 1936954.0, "admin": 3238291.0, "operating": 7115811.0, "financial": 762318.0, "depreciation": 212121.0, "marketing": 0}, {"period": "2026-03", "clean_revenue": -6754738.0, "wallet_mechanic": 6456577.0, "total_expense": 14073728.0, "other_income": 27494.0, "net_result": -20800972.0, "selling": 2917948.0, "admin": 3208148.0, "operating": 6803451.0, "financial": 909332.0, "depreciation": 234849.0, "marketing": 0}, {"period": "2026-04", "clean_revenue": -6974080.0, "wallet_mechanic": -8397862.0, "total_expense": 12611471.0, "other_income": 472736.0, "net_result": -19112816.0, "selling": 1894912.0, "admin": 1557801.0, "operating": 7045952.0, "financial": 1885533.0, "depreciation": 227273.0, "marketing": 0}, {"period": "2026-05", "clean_revenue": -4378517.0, "wallet_mechanic": -15727942.0, "total_expense": 14954472.0, "other_income": 1975617.0, "net_result": -17357371.0, "selling": 5004132.0, "admin": 3318447.0, "operating": 5381017.0, "financial": 1016028.0, "depreciation": 234849.0, "marketing": 0}, {"period": "2026-06", "clean_revenue": -3970616.0, "wallet_mechanic": -5961248.0, "total_expense": 21982923.0, "other_income": 561891.0, "net_result": -25391648.0, "selling": 4892640.0, "admin": 1604061.0, "operating": 14123205.0, "financial": 1084679.0, "depreciation": 227273.0, "marketing": 51066.0}, {"period": "2026-07", "clean_revenue": -701561.0, "wallet_mechanic": -5732174, "total_expense": 7578521.0, "other_income": 149.0, "net_result": -8279933.0, "selling": 4309841.0, "admin": 386562.0, "operating": 1475229.0, "financial": 185188.0, "depreciation": 37879.0, "marketing": 1183821.0}];
 
 function fyKey(period){
   const [y,m] = period.split('-').map(Number);
   return m>=7 ? `FY${y+1}` : `FY${y}`;
 }
-const fy = {};
-monthly.forEach(r=>{
-  const k = fyKey(r.period);
-  fy[k] = fy[k] || {clean_revenue:0,total_expense:0,net_result:0};
-  fy[k].clean_revenue += r.clean_revenue;
-  fy[k].total_expense += r.total_expense;
-  fy[k].net_result += r.net_result;
-});
+function num(v, d){ const n = Number(v); return isNaN(n) ? (d||0) : n; }
+function pick(liveArr, fallbackArr){ return (Array.isArray(liveArr) && liveArr.length) ? liveArr : fallbackArr; }
+function stats(arr){
+  const n = arr.length || 1;
+  const mean = arr.reduce((a,b)=>a+b,0)/n;
+  const variance = arr.reduce((a,b)=>a+Math.pow(b-mean,2),0)/n;
+  const sd = Math.sqrt(variance);
+  return {mean, sd, cov: mean!==0 ? Math.abs(sd/mean) : null};
+}
+function computeFY(monthlyArr){
+  const out = {};
+  monthlyArr.forEach(r=>{
+    const k = fyKey(r.period);
+    out[k] = out[k] || {clean_revenue:0,total_expense:0,net_result:0,selling:0,admin:0,operating:0,financial:0,depreciation:0,marketing:0,wallet_mechanic:0};
+    out[k].clean_revenue += r.clean_revenue;
+    out[k].total_expense += r.total_expense;
+    out[k].net_result += r.net_result;
+    out[k].selling += r.selling||0;
+    out[k].admin += r.admin||0;
+    out[k].operating += r.operating||0;
+    out[k].financial += r.financial||0;
+    out[k].depreciation += r.depreciation||0;
+    out[k].marketing += r.marketing||0;
+    out[k].wallet_mechanic += Math.abs(r.wallet_mechanic||0);
+  });
+  return out;
+}
+function deriveMonthlyFromLive(rows){
+  return rows.map(r=>{
+    const selling = num(r.selling), admin = num(r.admin), operating = num(r.operating),
+      financial = num(r.financial), depreciation = num(r.depreciation), marketing = num(r.marketing),
+      other_income = num(r.other_income), clean_revenue = num(r.clean_revenue), wallet_mechanic = num(r.wallet_mechanic);
+    const total_expense = selling+admin+operating+financial+depreciation+marketing;
+    const net_result = clean_revenue - total_expense + other_income;
+    return {period:r.period, clean_revenue, wallet_mechanic, total_expense, other_income, net_result,
+      selling, admin, operating, financial, depreciation, marketing};
+  });
+}
+
+let monthly = FALLBACK_MONTHLY.slice();
+let fy = computeFY(monthly);
+let LIVE = null;
+let currentGroupId = 1;
+
+const FALLBACK_BALANCE_SHEET = [
+  {gl:'Cash at Bank', balance:-402378194},
+  {gl:'Trade Receivable (Local)', balance:115819836},
+  {gl:'Payable against Suppliers', balance:81476352},
+  {gl:'Inter Company Balance', balance:-110699406},
+  {gl:'Investment', balance:61573151},
+  {gl:'Advance Suppliers & Others', balance:31352500},
+  {gl:'Payable against Expenses', balance:9843543},
+  {gl:'Advances Income Tax', balance:8508091}
+];
+const FALLBACK_BANK = [
+  {bankName:'BRAC Bank Ltd', accountName:'Akij Logistics Ltd.', balance:52756137},
+  {bankName:'The City Bank Ltd', accountName:'Akij Logistics Ltd.', balance:1370139},
+  {bankName:'Islami Bank Bangladesh Ltd', accountName:'Akij Logistics Ltd.', balance:786849},
+  {bankName:'Dutch-Bangla Bank Ltd', accountName:'Akij Logistics Ltd.', balance:686977},
+  {bankName:'Dutch-Bangla Bank Ltd', accountName:'Akij Air Service Ltd (own name)', balance:97700},
+  {bankName:'BRAC Bank Ltd', accountName:'Akij Air Service Ltd (own name)', balance:-575}
+];
+const FALLBACK_ASSETS = [
+  {category:'Building & Construction', bookValue:4700000},
+  {category:'Furniture & Fixture', bookValue:2581512},
+  {category:'Phone/Fax/Electrical/IT Equipment', bookValue:1982853},
+  {category:'Plant & Machinery', bookValue:667900},
+  {category:'Gas/Water/Electric Installation', bookValue:93000}
+];
+const FALLBACK_SEGMENTS = [
+  {segment:'(Unassigned)', revenue:-80574931, expense:133609740},
+  {segment:'B2B', revenue:47213275, expense:14091476},
+  {segment:'Sales (overhead)', revenue:0, expense:15627797},
+  {segment:'Procurement (overhead)', revenue:0, expense:13511524},
+  {segment:'HR & Administration', revenue:0, expense:9934479},
+  {segment:'NA (interest)', revenue:0, expense:5288840},
+  {segment:'airservice', revenue:-1659112, expense:1467789},
+  {segment:'Finance', revenue:0, expense:3382608},
+  {segment:'B2C', revenue:0, expense:0},
+  {segment:'Marketing', revenue:0, expense:51066}
+];
+const FALLBACK_VENDORS = [
+  {partner:'Rhythm Tours & Travel Ltd.', amount:3527500},
+  {partner:'Falcon Travels', amount:3361604},
+  {partner:'Junction House BD', amount:1761900},
+  {partner:'Rashida Rashid (individual)', amount:1500000},
+  {partner:'Innovate Solution', amount:1400000}
+];
+const FALLBACK_EMPLOYEE_COUNT = 75;
+const FALLBACK_TAX_ADVANCE = 8508091;
+const FALLBACK_OUTLIERS = {beyond10sigma:508, beyond20sigma:268, maxAmount:91003749, round100k:8358, round1m:1440, totalLarge:46540};
+const FALLBACK_TWO_FACTOR = [{type:'Journal', complete:78, cnt:78},{type:'Reconcile', complete:21, cnt:21},{type:'Reconcile', complete:0, cnt:1}];
+
+async function loadLiveData(){
+  const badge = document.getElementById('liveStatus');
+  try{
+    const res = await fetch('/api/aasl-data');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    LIVE = data;
+    if(Array.isArray(data.monthly) && data.monthly.length){
+      monthly = deriveMonthlyFromLive(data.monthly);
+      fy = computeFY(monthly);
+    }
+    if(badge) badge.textContent = 'LIVE · synced ' + new Date(data.meta.generatedAt).toLocaleString();
+    go(currentGroupId);
+  }catch(e){
+    if(badge) badge.textContent = 'STATIC SNAPSHOT · DB unreachable';
+    console.error('Live data fetch failed, showing static snapshot', e);
+  }
+}
 
 function fmt(n){
   const v = Math.round(n);
@@ -244,6 +348,41 @@ function renderGroup1(){
   const totalRev = monthly.reduce((a,r)=>a+r.clean_revenue,0);
   const totalExp = monthly.reduce((a,r)=>a+r.total_expense,0);
 
+  const revStats = stats(monthly.map(r=>r.clean_revenue));
+  const fyKeys = Object.keys(fy).sort();
+  const latestFY = fyKeys[fyKeys.length-1] || 'FY—';
+  const prevFY = fyKeys[fyKeys.length-2] || 'FY—';
+  const latest = fy[latestFY] || {selling:0,admin:0,operating:0,financial:0,depreciation:0,marketing:0,total_expense:0,wallet_mechanic:0};
+  const prev = fy[prevFY] || {total_expense:0,wallet_mechanic:0};
+
+  const csLines = [
+    ['Selling Expenses', latest.selling],
+    ['Operating Expenses', latest.operating],
+    ['Administrative Expenses', latest.admin],
+    ['Financial Expenses', latest.financial],
+    ['Depreciation', latest.depreciation],
+    ['Marketing', latest.marketing],
+  ];
+  const commonSizeRows = csLines.map(([label,amt])=>{
+    const pct = latest.total_expense ? (amt/latest.total_expense*100).toFixed(1) : '0.0';
+    return `<tr><td>${label}</td><td>${fmt(amt)}</td><td>${pct}%</td></tr>`;
+  }).join('');
+
+  const scaleLatest = latest.wallet_mechanic, scalePrev = prev.wallet_mechanic;
+  const scaleGrowth = scaleLatest - scalePrev;
+  const scaleGrowthLabel = scalePrev ? (((scaleLatest-scalePrev)/Math.abs(scalePrev))*100).toFixed(0)+'%' : 'n/a';
+  const expLatest = latest.total_expense, expPrev = prev.total_expense;
+  const expGrowth = expLatest - expPrev;
+  const expGrowthLabel = expPrev ? (((expLatest-expPrev)/Math.abs(expPrev))*100).toFixed(0)+'%' : 'n/a';
+
+  const fixedAmt = latest.admin + latest.depreciation;
+  const variableAmt = latest.selling + latest.operating + latest.marketing;
+  const financialAmt = latest.financial;
+  const cmTotal = fixedAmt + variableAmt + financialAmt;
+  const fixedPct = cmTotal ? (fixedAmt/cmTotal*100).toFixed(1) : '0.0';
+  const variablePct = cmTotal ? (variableAmt/cmTotal*100).toFixed(1) : '0.0';
+  const financialPct = cmTotal ? (financialAmt/cmTotal*100).toFixed(1) : '0.0';
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · I</span>
@@ -291,58 +430,63 @@ function renderGroup1(){
     <div class="section-title">Revenue Volatility &amp; Growth</div>
     <div class="tablewrap"><table>
       <tr><th>Metric</th><th>Value</th></tr>
-      <tr><td>Mean monthly revenue</td><td class="neg">(1,856,727)</td></tr>
-      <tr><td>Std. deviation</td><td>8,447,672</td></tr>
-      <tr><td>Coefficient of Variation</td><td>4.55</td></tr>
+      <tr><td>Mean monthly revenue</td><td class="${cls(revStats.mean)}">${fmt(revStats.mean)}</td></tr>
+      <tr><td>Std. deviation</td><td>${fmt(revStats.sd)}</td></tr>
+      <tr><td>Coefficient of Variation</td><td>${revStats.cov!==null ? revStats.cov.toFixed(2) : 'n/a'}</td></tr>
       <tr><td>CAGR</td><td>Not computable — sign-flipping revenue, no valid compounding base</td></tr>
     </table></div>
     <div class="callout warn">
       <span class="tag">Finding</span>
-      <p>CoV of 4.55 means volatility is 4.5&times; the mean — this is not a business with a trend, it's a business with noise. No stable growth rate exists to report.</p>
+      <p>CoV of ${revStats.cov!==null ? revStats.cov.toFixed(2) : 'n/a'} means volatility swamps the average — this is not a business with a stable trend, it's a business with noise. No stable growth rate exists to report.</p>
     </div>
 
-    <div class="section-title">Common-Size Structure — FY2026</div>
-    <div class="section-sub">Base = Total Expense, not Revenue (FY2026 revenue is net-negative, an invalid denominator)</div>
+    <div class="section-title">Common-Size Structure — ${latestFY}</div>
+    <div class="section-sub">Base = Total Expense, not Revenue (a net-negative revenue period is an invalid denominator)</div>
     <div class="tablewrap"><table>
       <tr><th>Line</th><th>Amount</th><th>% of Total Expense</th></tr>
-      <tr><td>Selling Expenses</td><td>123,421,020</td><td><b>65.2%</b></td></tr>
-      <tr><td>Operating Expenses</td><td>42,812,224</td><td>22.6%</td></tr>
-      <tr><td>Administrative Expenses</td><td>14,800,050</td><td>7.8%</td></tr>
-      <tr><td>Financial Expenses</td><td>6,945,981</td><td>3.7%</td></tr>
-      <tr><td>Depreciation</td><td>1,348,486</td><td>0.7%</td></tr>
-      <tr><td>Marketing</td><td>51,066</td><td>0.0%</td></tr>
+      ${commonSizeRows}
     </table></div>
     <div class="callout warn">
       <span class="tag">Finding</span>
-      <p>Selling expense alone is nearly two-thirds of total cost — the dominant driver by far. Gross/Operating/Net margins are not computable in any period — every year either lacks full expense classification or has a negative revenue denominator.</p>
+      <p>Selling expense is the dominant cost driver. Gross/Operating/Net margins are not computable in any period — every year either lacks full expense classification or has a negative revenue denominator.</p>
     </div>
 
     <div class="section-title">Operating Leverage</div>
     <div class="tablewrap"><table>
-      <tr><th></th><th>FY2025</th><th>FY2026</th><th>Growth</th></tr>
-      <tr><td>Gross transaction volume (scale proxy)</td><td>79,079,183</td><td>386,102,402</td><td class="pos">+388%</td></tr>
-      <tr><td>Total expense</td><td>24,680,357 (partial)</td><td>189,378,827</td><td class="neg">+667%</td></tr>
+      <tr><th></th><th>${prevFY}</th><th>${latestFY}</th><th>Growth</th></tr>
+      <tr><td>Gross transaction volume (scale proxy)</td><td>${fmt(scalePrev)}</td><td>${fmt(scaleLatest)}</td><td class="${cls(scaleGrowth)}">${scaleGrowthLabel}</td></tr>
+      <tr><td>Total expense</td><td>${fmt(expPrev)}</td><td>${fmt(expLatest)}</td><td class="${cls(expGrowth)}">${expGrowthLabel}</td></tr>
     </table></div>
     <div class="callout warn">
-      <span class="tag">Finding — negative operating leverage</span>
-      <p>Costs grew nearly 2&times; as fast as the underlying business scale. This directly explains the widening losses in the Net Result trend above.</p>
+      <span class="tag">Operating leverage</span>
+      <p>Comparing ${prevFY} → ${latestFY}: cost growth vs. transaction-volume growth shown above. When expense growth outpaces scale growth, that's negative operating leverage and explains widening losses.</p>
     </div>
 
-    <div class="section-title">Contribution Margin Proxy — FY2026</div>
+    <div class="section-title">Contribution Margin Proxy — ${latestFY}</div>
     <div class="tablewrap"><table>
       <tr><th>Classification</th><th>Amount</th><th>% of Total</th></tr>
-      <tr><td>Fixed (Admin + Depreciation)</td><td>16,148,536</td><td>8.5%</td></tr>
-      <tr><td>Variable (Selling + Operating + Marketing)</td><td>166,284,310</td><td>87.8%</td></tr>
-      <tr><td>Financial (debt service, separate)</td><td>6,945,981</td><td>3.7%</td></tr>
+      <tr><td>Fixed (Admin + Depreciation)</td><td>${fmt(fixedAmt)}</td><td>${fixedPct}%</td></tr>
+      <tr><td>Variable (Selling + Operating + Marketing)</td><td>${fmt(variableAmt)}</td><td>${variablePct}%</td></tr>
+      <tr><td>Financial (debt service, separate)</td><td>${fmt(financialAmt)}</td><td>${financialPct}%</td></tr>
     </table></div>
     <div class="callout warn">
       <span class="tag">Finding</span>
-      <p>Cost structure is ~88% variable. Combined with the operating leverage finding above, unit economics per transaction appear to be deteriorating, not just the fixed-cost burden.</p>
+      <p>Cost structure is predominantly variable. Combined with the operating leverage finding above, unit economics per transaction should be watched closely as scale grows.</p>
     </div>
   `;
 }
 
 function renderGroup2(){
+  const bsMap = {};
+  pick(LIVE && LIVE.balanceSheet, FALLBACK_BALANCE_SHEET).forEach(r=>{ bsMap[r.gl] = num(r.balance); });
+  const bsRows = FALLBACK_BALANCE_SHEET.map(fb=>{
+    const bal = bsMap[fb.gl] !== undefined ? bsMap[fb.gl] : fb.balance;
+    return `<tr><td>${fb.gl}</td><td class="${cls(bal)}">${fmt(bal)}</td></tr>`;
+  }).join('');
+  const cash = bsMap['Cash at Bank'] !== undefined ? bsMap['Cash at Bank'] : FALLBACK_BALANCE_SHEET.find(r=>r.gl==='Cash at Bank').balance;
+  const dep = (fy[Object.keys(fy).sort().pop()]||{}).depreciation || 1348486;
+  const netIncomeLatest = (fy[Object.keys(fy).sort().pop()]||{}).net_result || -249292490;
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · II — Derived, not pulled</span>
@@ -355,36 +499,26 @@ function renderGroup2(){
       <p>No formal balance sheet or cash flow table exists in this database. Everything below is reconstructed from cumulative General Ledger balances. Exact debit/credit sign convention per account type has not been independently validated against a live iBOS report — treat direction (growing/shrinking) as more reliable than the absolute sign shown.</p>
     </div>
 
-    <div class="section-title">I-B: Balance Sheet Positions (Cumulative GL Balances, as of Jul 2026)</div>
+    <div class="section-title">I-B: Balance Sheet Positions (Cumulative GL Balances, live)</div>
     <div class="tablewrap"><table>
-      <tr><th>GL Account</th><th>Cumulative Balance</th><th>FY25 → FY26 Trend</th></tr>
-      <tr><td>Cash at Bank</td><td class="neg">(402,378,194)</td><td>Deepened from (382.5M)</td></tr>
-      <tr><td>Trade Receivable (Local)</td><td class="pos">115,819,836</td><td>Grew from 100.3M</td></tr>
-      <tr><td>Payable against Suppliers</td><td class="pos">81,476,352</td><td class="neg">Fell sharply from 198.7M</td></tr>
-      <tr><td>Inter Company Balance</td><td class="neg">(110,699,406)</td><td>New / growing (was ~0)</td></tr>
-      <tr><td>Investment</td><td class="pos">61,573,151</td><td>New in FY2026 (was 0)</td></tr>
-      <tr><td>Advance Suppliers &amp; Others</td><td class="pos">31,352,500</td><td>New in FY2026</td></tr>
-      <tr><td>Payable against Expenses</td><td class="pos">9,843,543</td><td>Up from ~0</td></tr>
-      <tr><td>Advances Income Tax</td><td class="pos">8,508,091</td><td>Growing steadily</td></tr>
+      <tr><th>GL Account</th><th>Cumulative Balance</th></tr>
+      ${bsRows}
     </table></div>
     <div class="callout warn">
       <span class="tag">Finding</span>
       <p>Payable against Suppliers fell ~102.7M while Investment (+61.6M) and Inter Company Balance (-110.7M) appeared suddenly in FY2026 — consistent with AASL paying down supplier obligations while taking on new intercompany financing and making an investment. Needs confirmation in Group V (Related-Party) before drawing conclusions.</p>
     </div>
 
-    <div class="section-title">I-C: Cash Flow Analysis — Indirect Method (FY2026)</div>
+    <div class="section-title">I-C: Cash Flow Analysis — Indirect Method (${Object.keys(fy).sort().pop()})</div>
     <div class="tablewrap"><table>
       <tr><th>Component</th><th>Amount</th></tr>
-      <tr><td>Net Income (from Group I)</td><td class="neg">(249,292,490)</td></tr>
-      <tr><td>+ Depreciation add-back</td><td class="pos">1,348,486</td></tr>
-      <tr><td>− Increase in Receivables</td><td class="neg">(7,151,246)</td></tr>
-      <tr><td>− Decrease in Payables (use of cash)</td><td class="neg">(102,699,932)</td></tr>
-      <tr class="fy-row"><td>= CFO (indirect, partial)</td><td class="neg">(357,795,182)</td></tr>
+      <tr><td>Net Income (from Group I, live)</td><td class="${cls(netIncomeLatest)}">${fmt(netIncomeLatest)}</td></tr>
+      <tr><td>+ Depreciation add-back (live)</td><td class="pos">${fmt(dep)}</td></tr>
     </table></div>
 
     <div class="callout warn">
-      <span class="tag">Reconciliation gap — 329M unexplained</span>
-      <p>Actual Cash at Bank movement FY25→FY26 was only (28,653,440) per the GL directly — not (357.8M). The gap is explained by Financing/Investing items not in this Operating-only formula: Inter Company Balance (-110.7M), Investment (+61.6M), and Advance Suppliers (+31.4M) all moved materially in FY2026. A complete 3-line cash flow statement (Operating / Investing / Financing) is needed to close this gap properly — planned for after Group V (Related-Party) and Segment 2 (Assets).</p>
+      <span class="tag">Reconciliation gap — not yet closeable live</span>
+      <p>A full indirect-method CFO needs period-over-period deltas in Receivables/Payables (this quarter's GL balance minus last quarter's), which requires storing historical snapshots — this API currently only pulls the all-time cumulative GL balance. Net Income and the Depreciation add-back above are live; the Receivables/Payables movement lines and the full reconciliation are not yet wired and are intentionally omitted rather than shown stale.</p>
     </div>
 
     <div class="callout">
@@ -402,6 +536,16 @@ function renderGroup2(){
 }
 
 function renderGroup3(){
+  const assetRows = pick(LIVE && LIVE.assets, FALLBACK_ASSETS);
+  const assetTotal = assetRows.reduce((a,r)=>a+num(r.bookValue),0);
+  const assetTableRows = assetRows.map(r=>`<tr><td>${r.category}</td><td>${fmt(num(r.bookValue))}</td></tr>`).join('');
+
+  const segRows = pick(LIVE && LIVE.segments, FALLBACK_SEGMENTS);
+  const segTableRows = segRows.map(r=>{
+    const rev = num(r.revenue), exp = num(r.expense), net = rev-exp;
+    return `<tr><td>${r.segment}</td><td class="${cls(rev)}">${fmt(rev)}</td><td>${fmt(exp)}</td><td class="${cls(net)}">${fmt(net)}</td></tr>`;
+  }).join('');
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · III</span>
@@ -414,15 +558,11 @@ function renderGroup3(){
       <p>Gross/EBIT/EBITDA/Net margin trends are not computable — revenue is negative or unreliable in every period (same root cause as Group I). Reporting a margin % against a broken denominator would be false precision, so none is shown.</p>
     </div>
 
-    <div class="section-title">Fixed Asset Base (ast.tblAsset, BU-245)</div>
+    <div class="section-title">Fixed Asset Base (ast.tblAsset, BU-245, live)</div>
     <div class="tablewrap"><table>
       <tr><th>Asset Category</th><th>Book Value</th></tr>
-      <tr><td>Building &amp; Construction</td><td>4,700,000</td></tr>
-      <tr><td>Furniture &amp; Fixture</td><td>2,581,512</td></tr>
-      <tr><td>Phone/Fax/Electrical/IT Equipment</td><td>1,982,853</td></tr>
-      <tr><td>Plant &amp; Machinery</td><td>667,900</td></tr>
-      <tr><td>Gas/Water/Electric Installation</td><td>93,000</td></tr>
-      <tr class="fy-row"><td>Total Fixed Assets</td><td>10,025,265</td></tr>
+      ${assetTableRows}
+      <tr class="fy-row"><td>Total Fixed Assets</td><td>${fmt(assetTotal)}</td></tr>
     </table></div>
     <div class="callout warn">
       <span class="tag">Major finding</span>
@@ -436,20 +576,11 @@ function renderGroup3(){
     </div>
     <p class="footnote">ROA needs Total Assets (fixed + cash + receivables), but cash/receivable signs are still unvalidated from Group II. DuPont needs a working Net Margin and an equity figure — both unavailable. Reporting either would be fabricated precision.</p>
 
-    <div class="section-title">Segment / Cost-Center Profitability — FY2026</div>
+    <div class="section-title">Segment / Cost-Center Profitability — trailing 12 months (live)</div>
     <div class="section-sub">Using strCostRevenueName tags on the journal as the segment dimension</div>
     <div class="tablewrap"><table>
       <tr><th>Segment</th><th>Revenue</th><th>Expense</th><th>Net Result</th></tr>
-      <tr><td>(Unassigned)</td><td class="neg">(80,574,931)</td><td>133,609,740</td><td class="neg">(211,168,037)</td></tr>
-      <tr><td>B2B</td><td class="pos">47,213,275</td><td>14,091,476</td><td class="pos">33,121,799</td></tr>
-      <tr><td>Sales (overhead)</td><td>0</td><td>15,627,797</td><td class="neg">(15,627,797)</td></tr>
-      <tr><td>Procurement (overhead)</td><td>0</td><td>13,511,524</td><td class="neg">(13,511,524)</td></tr>
-      <tr><td>HR &amp; Administration</td><td>0</td><td>9,934,479</td><td class="neg">(9,934,479)</td></tr>
-      <tr><td>NA (interest)</td><td>0</td><td>5,288,840</td><td class="neg">(5,288,840)</td></tr>
-      <tr><td>airservice</td><td class="neg">(1,659,112)</td><td>1,467,789</td><td class="neg">(3,126,901)</td></tr>
-      <tr><td>Finance</td><td>0</td><td>3,382,608</td><td class="neg">(3,382,608)</td></tr>
-      <tr><td>B2C</td><td>0</td><td>0</td><td class="pos">424,249</td></tr>
-      <tr><td>Marketing</td><td>0</td><td>51,066</td><td class="neg">(51,066)</td></tr>
+      ${segTableRows}
     </table></div>
     <div class="callout warn">
       <span class="tag">Critical finding</span>
@@ -461,6 +592,29 @@ function renderGroup3(){
 }
 
 function renderGroup4(){
+  const bankRows = pick(LIVE && LIVE.bank, FALLBACK_BANK).filter(r=>r.balance!==null && r.balance!==undefined);
+  const totalCash = bankRows.reduce((a,r)=>a+num(r.balance),0) || 1;
+  const bankTableRows = bankRows.map(r=>{
+    const bal = num(r.balance);
+    const pct = (bal/totalCash*100).toFixed(1);
+    return `<tr><td>${r.bankName}</td><td>${r.accountName}</td><td class="${cls(bal)}">${fmt(bal)}</td><td>${pct}%</td></tr>`;
+  }).join('');
+  const topPct = bankRows.length ? Math.max(...bankRows.map(r=>num(r.balance)))/totalCash*100 : 0;
+
+  const latestKey = Object.keys(fy).sort().pop();
+  const latestFyData = fy[latestKey] || {net_result:-249292490};
+  const monthsInFy = monthly.filter(r=>fyKey(r.period)===latestKey).length || 12;
+  const avgMonthlyBurn = Math.abs(latestFyData.net_result)/monthsInFy;
+  const avgDailyBurn = avgMonthlyBurn/30.4;
+  const daysOfCash = avgDailyBurn ? (totalCash/avgDailyBurn) : 0;
+  const runwayMonths = avgMonthlyBurn ? (totalCash/avgMonthlyBurn) : 0;
+
+  const bsMap4 = {};
+  pick(LIVE && LIVE.balanceSheet, FALLBACK_BALANCE_SHEET).forEach(r=>{ bsMap4[r.gl] = num(r.balance); });
+  const receivable = bsMap4['Trade Receivable (Local)'] !== undefined ? bsMap4['Trade Receivable (Local)'] : 115819836;
+  const payable = bsMap4['Payable against Suppliers'] !== undefined ? bsMap4['Payable against Suppliers'] : 81476352;
+  const currentRatio = payable ? ((totalCash+receivable)/payable) : 0;
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · IV</span>
@@ -468,48 +622,43 @@ function renderGroup4(){
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · As of Jul 6, 2026</div>
     </div>
 
-    <div class="section-title">Bank Account Concentration</div>
+    <div class="section-title">Bank Account Concentration (live)</div>
     <div class="tablewrap"><table>
       <tr><th>Bank</th><th>Titled As</th><th>Balance</th><th>% of Cash</th></tr>
-      <tr><td>BRAC Bank Ltd</td><td>Akij Logistics Ltd.</td><td>52,756,137</td><td><b>94.7%</b></td></tr>
-      <tr><td>The City Bank Ltd</td><td>Akij Logistics Ltd.</td><td>1,370,139</td><td>2.5%</td></tr>
-      <tr><td>Islami Bank Bangladesh Ltd</td><td>Akij Logistics Ltd.</td><td>786,849</td><td>1.4%</td></tr>
-      <tr><td>Dutch-Bangla Bank Ltd</td><td>Akij Logistics Ltd.</td><td>686,977</td><td>1.2%</td></tr>
-      <tr><td>Dutch-Bangla Bank Ltd</td><td>Akij Air Service Ltd (own name)</td><td>97,700</td><td>0.2%</td></tr>
-      <tr><td>BRAC Bank Ltd</td><td>Akij Air Service Ltd (own name)</td><td class="neg">(575)</td><td>~0%</td></tr>
-      <tr class="fy-row"><td>Total</td><td></td><td>55,697,227</td><td>100%</td></tr>
+      ${bankTableRows}
+      <tr class="fy-row"><td>Total</td><td></td><td>${fmt(totalCash)}</td><td>100%</td></tr>
     </table></div>
     <div class="callout warn">
       <span class="tag">Critical finding — bank concentration &amp; related-party risk</span>
-      <p>94.7% of AASL's actual cash sits in a single bank account legally titled "Akij Logistics Ltd." — a different entity, not AASL's own name. The two accounts actually titled "Akij Air Service Ltd" hold almost nothing (~97K combined) and went dormant mid-2026. This is a real governance risk, not a modeling artifact, and should be examined further in Group VIII (Related-Party).</p>
+      <p>${topPct.toFixed(1)}% of AASL's actual cash sits in its single largest bank account. Watch whether that account's legal title matches "Akij Air Service Ltd." — historically it has been titled under a different Akij entity, which is a governance risk, not a modeling artifact (see Group VIII).</p>
     </div>
     <div class="callout">
       <span class="tag">Note — corrects Group II</span>
-      <p>This real, reconciled bank balance (55.7M) contradicts the cumulative GL "Cash at Bank" figure from Group II (-402M). That confirms the GL figure was distorted by wallet-mechanic/clearing entries and should not be trusted as an actual cash balance.</p>
+      <p>This real, reconciled bank balance contradicts the cumulative GL "Cash at Bank" figure from Group II. That confirms the GL figure is distorted by wallet-mechanic/clearing entries and should not be trusted as an actual cash balance.</p>
     </div>
 
-    <div class="section-title">Days-of-Cash-on-Hand &amp; Burn Rate</div>
+    <div class="section-title">Days-of-Cash-on-Hand &amp; Burn Rate (live)</div>
     <div class="tablewrap"><table>
       <tr><th>Metric</th><th>Value</th></tr>
-      <tr><td>Total cash on hand</td><td>55,697,227</td></tr>
-      <tr><td>FY2026 Net Result (loss)</td><td class="neg">(249,292,490)</td></tr>
-      <tr><td>Avg. monthly burn</td><td>20,774,374</td></tr>
-      <tr><td>Avg. daily burn</td><td>682,700</td></tr>
-      <tr class="fy-row"><td>Days of Cash on Hand</td><td>~81.6 days</td></tr>
-      <tr class="fy-row"><td>Cash Runway</td><td>~2.7 months</td></tr>
+      <tr><td>Total cash on hand</td><td>${fmt(totalCash)}</td></tr>
+      <tr><td>${latestKey} Net Result</td><td class="${cls(latestFyData.net_result)}">${fmt(latestFyData.net_result)}</td></tr>
+      <tr><td>Avg. monthly burn</td><td>${fmt(avgMonthlyBurn)}</td></tr>
+      <tr><td>Avg. daily burn</td><td>${fmt(avgDailyBurn)}</td></tr>
+      <tr class="fy-row"><td>Days of Cash on Hand</td><td>~${daysOfCash.toFixed(1)} days</td></tr>
+      <tr class="fy-row"><td>Cash Runway</td><td>~${runwayMonths.toFixed(1)} months</td></tr>
     </table></div>
 
-    <div class="section-title">Current Ratio Proxy</div>
+    <div class="section-title">Current Ratio Proxy (live)</div>
     <div class="tablewrap"><table>
       <tr><th>Component</th><th>Value</th></tr>
-      <tr><td>Cash</td><td>55,697,227</td></tr>
-      <tr><td>+ Trade Receivable</td><td>115,819,836</td></tr>
-      <tr><td>÷ Payable against Suppliers</td><td>81,476,352</td></tr>
-      <tr class="fy-row"><td>Current Ratio Proxy</td><td>~2.10&times;</td></tr>
+      <tr><td>Cash</td><td>${fmt(totalCash)}</td></tr>
+      <tr><td>+ Trade Receivable</td><td>${fmt(receivable)}</td></tr>
+      <tr><td>÷ Payable against Suppliers</td><td>${fmt(payable)}</td></tr>
+      <tr class="fy-row"><td>Current Ratio Proxy</td><td>~${currentRatio.toFixed(2)}&times;</td></tr>
     </table></div>
     <div class="callout warn">
       <span class="tag">Bottom line</span>
-      <p>AASL has roughly 2.7 months of runway at the current burn rate, with cash overwhelmingly concentrated in a bank account it doesn't hold in its own legal name. The current ratio looks healthy on paper (2.10&times;) but is misleading given the concentration risk and uncertain receivable collectability — this is a real liquidity risk, not just a modeling artifact.</p>
+      <p>Runway and concentration risk should be reassessed each time this page loads live data — thresholds above are computed from the current balances, not a point-in-time snapshot.</p>
     </div>
 
     <p class="footnote">Source: fin.tblBankAccountStatement + fin.tblBankAccount, iBOSDDD, BU-245. Bank balances as of latest reconciled statement entry (Jul 6, 2026).</p>
@@ -517,6 +666,16 @@ function renderGroup4(){
 }
 
 function renderGroup5(){
+  const rp = pick(LIVE && LIVE.relatedParty, []);
+  let cumBalance = 0, cumInterest = 0;
+  const rpRows = rp.map(r=>{
+    cumBalance += num(r.balanceMove);
+    cumInterest += num(r.interestMove);
+    return {period:r.period, cumBalance, cumInterest};
+  });
+  const rpTail = rpRows.slice(-6);
+  const rpTableRows = rpTail.map(r=>`<tr><td>${r.period}</td><td class="${cls(r.cumBalance)}">${fmt(r.cumBalance)}</td><td>${fmt(r.cumInterest)}</td></tr>`).join('');
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · V</span>
@@ -567,16 +726,27 @@ function renderGroup5(){
       <p>Intercompany borrowing was negligible through 2025, then exploded with a ৳68.8M single draw in Jan 2026 — the same month AASL's monthly losses were also near their worst. This looks like AASL being kept afloat by intercompany financing precisely when operating losses peaked — a genuine solvency dependency signal, not just a funding preference.</p>
     </div>
 
+    <div class="section-title">Live Intercompany Balance Trend (last 6 months)</div>
+    <div class="tablewrap"><table>
+      <tr><th>Period</th><th>Cumulative Inter Company Balance</th><th>Cumulative Interest</th></tr>
+      ${rpTableRows || '<tr><td colspan="3">No live data yet</td></tr>'}
+    </table></div>
+    <div class="callout">
+      <span class="tag">Note</span>
+      <p>This table is computed live as a running sum of monthly Inter Company Balance / Interest GL movements from the full ledger history, so it will reflect the latest borrowing activity automatically. The narrative tables above are the original point-in-time investigation and are kept for context.</p>
+    </div>
+
     <p class="footnote">Source: fin.tblAccountingJournal (Inter Company Balance, Inter Company Interest Balance GLs), iBOSDDD, BU-245.</p>
   `;
 }
 
 function renderGroup6(){
+  const empCount = (LIVE && LIVE.employeeCount) ? LIVE.employeeCount : FALLBACK_EMPLOYEE_COUNT;
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · VI</span>
       <h1>Efficiency Analysis</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY2026 · 75 employees</div>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · ${empCount} employees (live)</div>
     </div>
 
     <div class="tablewrap"><table>
@@ -604,6 +774,14 @@ function renderGroup6(){
 }
 
 function renderGroup7(){
+  const vendorRows = pick(LIVE && LIVE.vendors, FALLBACK_VENDORS).slice(0,5);
+  const vendorTotal = pick(LIVE && LIVE.vendors, FALLBACK_VENDORS).reduce((a,r)=>a+num(r.amount),0) || 1;
+  const vendorTableRows = vendorRows.map(r=>{
+    const pct = (num(r.amount)/vendorTotal*100).toFixed(1);
+    return `<tr><td>${r.partner}</td><td>${fmt(num(r.amount))}</td><td>${pct}%</td></tr>`;
+  }).join('');
+  const top5Pct = vendorRows.reduce((a,r)=>a+num(r.amount),0)/vendorTotal*100;
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · VII</span>
@@ -614,16 +792,11 @@ function renderGroup7(){
     <div class="section-title">Cost Waterfall &amp; Fixed/Variable Split</div>
     <p style="font-size:14px; color:#DCE3EC;">Already established in Groups I &amp; III: Selling 65.2%, Operating 22.6%, Admin 7.8%, Financial 3.7%, Depreciation 0.7%, Marketing 0.0%. Fixed ~8.5%, Variable ~87.8%, Financial ~3.7%.</p>
 
-    <div class="section-title">Vendor / Expense Concentration</div>
+    <div class="section-title">Vendor / Expense Concentration (live, top 5 of top 15 pulled)</div>
     <div class="tablewrap"><table>
       <tr><th>Vendor</th><th>Amount</th><th>% of Total</th></tr>
-      <tr><td>Rhythm Tours &amp; Travel Ltd.</td><td>3,527,500</td><td>18.9%</td></tr>
-      <tr><td>Falcon Travels</td><td>3,361,604</td><td>18.0%</td></tr>
-      <tr><td>Junction House BD</td><td>1,761,900</td><td>9.4%</td></tr>
-      <tr><td>Rashida Rashid (individual)</td><td>1,500,000</td><td>8.0%</td></tr>
-      <tr><td>Innovate Solution</td><td>1,400,000</td><td>7.5%</td></tr>
-      <tr class="fy-row"><td>Top 5 total</td><td></td><td>61.7%</td></tr>
-      <tr class="fy-row"><td>Top 15 (of all vendors)</td><td></td><td>90.1%</td></tr>
+      ${vendorTableRows}
+      <tr class="fy-row"><td>Top 5 total</td><td></td><td>${top5Pct.toFixed(1)}%</td></tr>
     </table></div>
     <div class="callout warn">
       <span class="tag">Finding</span>
@@ -641,6 +814,14 @@ function renderGroup7(){
 }
 
 function renderGroup8(){
+  const tf = pick(LIVE && LIVE.governance && LIVE.governance.twoFactor, FALLBACK_TWO_FACTOR);
+  const tfRows = tf.map(r=>`<tr><td>${r.type} (${r.complete?'complete':'incomplete'})</td><td>${r.cnt}</td></tr>`).join('');
+  const audit = pick(LIVE && LIVE.governance && LIVE.governance.auditByMonth, []);
+  const auditSorted = audit.slice().sort((a,b)=> b.cnt - a.cnt);
+  const spikeMonth = auditSorted[0];
+  const normalMonths = audit.slice().sort((a,b)=> b.period.localeCompare(a.period)).slice(1,7);
+  const avgNormal = normalMonths.length ? Math.round(normalMonths.reduce((a,r)=>a+r.cnt,0)/normalMonths.length) : null;
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · VIII</span>
@@ -660,17 +841,16 @@ function renderGroup8(){
       <p>467 entries, net -115,988,246 BDT — and critically, strPartnerName is NULL on every single one. The ledger records this ~116M relationship without identifying which counterparty (which Akij entity) is on the other side. This ~116M relationship cannot be traced to a named entity from the data alone.</p>
     </div>
 
-    <div class="section-title">Governance Red Flags</div>
+    <div class="section-title">Governance Red Flags (live)</div>
     <div class="tablewrap"><table>
-      <tr><th>Check</th><th>Result</th></tr>
-      <tr><td>Two-Factor Approvals (Journal)</td><td>78 complete</td></tr>
-      <tr><td>Two-Factor Approvals (Reconcile)</td><td>21 complete, 1 incomplete</td></tr>
-      <tr><td>Audit log — normal months</td><td>500 - 1,000 entries</td></tr>
-      <tr><td><b>Audit log — April 2026</b></td><td><b>11,285 entries</b></td></tr>
+      <tr><th>Check</th><th>Count</th></tr>
+      ${tfRows}
+      ${avgNormal!==null ? `<tr><td>Audit log — typical recent month</td><td>~${avgNormal} entries</td></tr>` : ''}
+      ${spikeMonth ? `<tr><td><b>Audit log — highest-volume month (${spikeMonth.period})</b></td><td><b>${spikeMonth.cnt} entries</b></td></tr>` : ''}
     </table></div>
     <div class="callout">
       <span class="tag">Finding</span>
-      <p>Two-Factor Approvals show no meaningful red flag (99 of 100 complete). The April 2026 audit spike is real — 82% of it is "Manual Reconcile" activity, coinciding exactly with the large cash swings seen in Groups II &amp; IV (+154M Jan, +196M Mar, -85M Apr). This reads as an intensive manual bank clean-up effort rather than a suspicious pattern, but it's a notable operational event worth knowing about — especially since it coincides with the intercompany funding surge.</p>
+      <p>Two-Factor Approval completion rates above are pulled live. If a single month's audit log volume is running many multiples of the typical recent month, that's worth a manual look at what action type is driving it (often bulk bank reconciliation, not necessarily suspicious) — cross-check against cash swings in Groups II &amp; IV.</p>
     </div>
 
     <p class="footnote">Source: fin.tblAccountingJournal, dco.tblAuditLog, dco.tblTwoFactorApproval, iBOSDDD, BU-245.</p>
@@ -678,6 +858,15 @@ function renderGroup8(){
 }
 
 function renderGroup11(){
+  const fyKeysAll = Object.keys(fy).sort();
+  const lk = fyKeysAll[fyKeysAll.length-1], pk = fyKeysAll[fyKeysAll.length-2];
+  const l = fy[lk] || {clean_revenue:0,total_expense:0,net_result:0};
+  const p = fy[pk] || {clean_revenue:0,total_expense:0,net_result:0};
+  const revSignFlip = (l.clean_revenue<0) !== (p.clean_revenue<0);
+  const revGrowthLabel = revSignFlip ? 'Sign-flip — not a valid %' : (p.clean_revenue ? (((l.clean_revenue-p.clean_revenue)/Math.abs(p.clean_revenue))*100).toFixed(0)+'%' : 'n/a');
+  const expGrowthLabel11 = p.total_expense ? '+'+(((l.total_expense-p.total_expense)/Math.abs(p.total_expense))*100).toFixed(0)+'%' : 'n/a';
+  const netMultiple = p.net_result ? (Math.abs(l.net_result)/Math.abs(p.net_result)).toFixed(1)+'×' : 'n/a';
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · XI</span>
@@ -685,12 +874,12 @@ function renderGroup11(){
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
     </div>
 
-    <div class="section-title">Year-over-Year Growth Rates</div>
+    <div class="section-title">Year-over-Year Growth Rates (live)</div>
     <div class="tablewrap"><table>
-      <tr><th>Metric</th><th>FY2025</th><th>FY2026</th><th>Growth</th></tr>
-      <tr><td>Clean Revenue</td><td>8,401,992</td><td class="neg">(63,353,982)</td><td>Sign-flip — not a valid %</td></tr>
-      <tr><td>Total Expense</td><td>24,680,357</td><td>189,378,823</td><td class="neg">+667%</td></tr>
-      <tr><td>Net Result (loss)</td><td class="neg">(16,278,367)</td><td class="neg">(249,292,490)</td><td class="neg">Loss deepened ~15.3&times;</td></tr>
+      <tr><th>Metric</th><th>${pk||'—'}</th><th>${lk||'—'}</th><th>Growth</th></tr>
+      <tr><td>Clean Revenue</td><td class="${cls(p.clean_revenue)}">${fmt(p.clean_revenue)}</td><td class="${cls(l.clean_revenue)}">${fmt(l.clean_revenue)}</td><td>${revGrowthLabel}</td></tr>
+      <tr><td>Total Expense</td><td>${fmt(p.total_expense)}</td><td>${fmt(l.total_expense)}</td><td class="neg">${expGrowthLabel11}</td></tr>
+      <tr><td>Net Result</td><td class="${cls(p.net_result)}">${fmt(p.net_result)}</td><td class="${cls(l.net_result)}">${fmt(l.net_result)}</td><td class="neg">Loss/gain ratio ~${netMultiple}</td></tr>
     </table></div>
     <div class="callout">
       <span class="tag">Note</span>
@@ -725,6 +914,12 @@ function renderGroup11(){
 }
 
 function renderGroup12(){
+  const o = (LIVE && LIVE.outliers) ? LIVE.outliers : FALLBACK_OUTLIERS;
+  const total = num(o.totalTransactions) || null;
+  const pct10 = total ? (num(o.beyond10sigma)/total*100).toFixed(2) : 'n/a';
+  const pct20 = total ? (num(o.beyond20sigma)/total*100).toFixed(2) : 'n/a';
+  const zMax = (o.std && num(o.std)!==0) ? ((num(o.maxAmount)-num(o.mean))/num(o.std)).toFixed(1) : null;
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · XII</span>
@@ -732,16 +927,16 @@ function renderGroup12(){
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
     </div>
 
-    <div class="section-title">Transaction Size Outliers (Z-score)</div>
+    <div class="section-title">Transaction Size Outliers (Z-score, live)</div>
     <div class="tablewrap"><table>
       <tr><th>Threshold</th><th>Count</th><th>% of All Entries</th></tr>
-      <tr><td>Beyond 10&sigma; (&gt;8.2M)</td><td>508</td><td>0.09%</td></tr>
-      <tr><td>Beyond 20&sigma; (&gt;16.4M)</td><td>268</td><td>0.05%</td></tr>
-      <tr class="fy-row"><td>Largest single transaction</td><td>91,003,749</td><td>z &asymp; 110.8&sigma;</td></tr>
+      <tr><td>Beyond 10&sigma;</td><td>${num(o.beyond10sigma)}</td><td>${pct10}%</td></tr>
+      <tr><td>Beyond 20&sigma;</td><td>${num(o.beyond20sigma)}</td><td>${pct20}%</td></tr>
+      <tr class="fy-row"><td>Largest single transaction</td><td>${fmt(num(o.maxAmount))}</td><td>${zMax ? 'z ≈ '+zMax+'σ' : 'n/a'}</td></tr>
     </table></div>
     <div class="callout warn">
       <span class="tag">Finding</span>
-      <p>The "wrong topup" reversal found in Group I is confirmed as an extreme statistical outlier — over 110 standard deviations from the mean, by far the largest single entry in the entire ledger.</p>
+      <p>The largest transaction in the ledger is flagged above with its live z-score. If it sits well beyond 20σ, treat it as an extreme statistical outlier worth tracing individually (as the "wrong topup" reversal was in the original analysis).</p>
     </div>
 
     <div class="section-title">Dormant-Period Detection</div>
@@ -750,11 +945,11 @@ function renderGroup12(){
     <div class="section-title">Duplicate Table Reconciliation</div>
     <p style="font-size:14px; color:#DCE3EC;">(Restated from Group I) Original journal has 590,575 entries vs. 575,986 in <span class="mono">_Duplicate</span> — a gap of 14,589 entries. Both independently balance to zero, so it's not corruption, but confirms <span class="mono">_Duplicate</span> is a stale snapshot, not a live mirror.</p>
 
-    <div class="section-title">Round-Number Bias Check</div>
+    <div class="section-title">Round-Number Bias Check (live)</div>
     <div class="tablewrap"><table>
       <tr><th>Threshold</th><th>Count</th><th>% of Large Transactions (&ge;100K)</th></tr>
-      <tr><td>Round to nearest 100,000</td><td>8,358 of 46,540</td><td><b>18.0%</b></td></tr>
-      <tr><td>Round to nearest 1,000,000</td><td>1,440 of 46,540</td><td>3.1%</td></tr>
+      <tr><td>Round to nearest 100,000</td><td>${num(o.round100k)} of ${num(o.totalLarge)}</td><td><b>${o.totalLarge ? (num(o.round100k)/num(o.totalLarge)*100).toFixed(1) : 'n/a'}%</b></td></tr>
+      <tr><td>Round to nearest 1,000,000</td><td>${num(o.round1m)} of ${num(o.totalLarge)}</td><td>${o.totalLarge ? (num(o.round1m)/num(o.totalLarge)*100).toFixed(1) : 'n/a'}%</td></tr>
     </table></div>
     <div class="callout">
       <span class="tag">Finding</span>
@@ -766,6 +961,10 @@ function renderGroup12(){
 }
 
 function renderGroup9(){
+  const taxLines = pick(LIVE && LIVE.taxLines, []);
+  const advanceTax = taxLines.length ? (taxLines.find(r=>r.gl==='Advances Income Tax')||{}).balance : FALLBACK_TAX_ADVANCE;
+  const hasProvision = taxLines.some(r=>/provision.*income.*tax/i.test(r.gl));
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · IX</span>
@@ -773,9 +972,14 @@ function renderGroup9(){
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
     </div>
 
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Advances Income Tax (live)</div><div class="value">${fmt(num(advanceTax))}</div></div>
+      <div class="kpi"><div class="label">Provision for Income Tax GL</div><div class="value">${hasProvision ? 'Present' : 'Not found'}</div></div>
+    </div>
+
     <div class="callout warn">
-      <span class="tag">Finding — no tax provision ever booked</span>
-      <p>There is no "Provision for Income Tax" line anywhere in AASL's P&L GL chart — only "Advances Income Tax" exists, a prepaid/advance account, not an actual tax expense. AASL has never booked a formal income tax provision against its P&L, despite accumulating ~8.5M BDT in advance tax payments by early 2026. This is a genuine compliance gap, not a data limitation.</p>
+      <span class="tag">Finding — tax provision check</span>
+      <p>${hasProvision ? 'A "Provision for Income Tax" GL line was found with live activity — re-verify the compliance gap noted previously.' : "No \"Provision for Income Tax\" line currently shows activity in AASL's P&L GL chart — only \"Advances Income Tax\" (a prepaid/advance account, not an actual tax expense) has a live balance. If this persists, it means AASL has never booked a formal income tax provision against its P&L despite accumulating advance tax payments — a genuine compliance gap, not a data limitation."}</p>
     </div>
 
     <div class="section-title">VAT/SD Trend</div>
@@ -937,6 +1141,7 @@ function renderGroup0(){
 }
 
 function go(id){
+  currentGroupId = id;
   renderNav(id);
   if(id===1) renderGroup1();
   if(id===2) renderGroup2();
@@ -954,6 +1159,7 @@ function go(id){
 
 renderNav(1);
 renderGroup1();
+loadLiveData();
 </script>
 </body>
 </html>
