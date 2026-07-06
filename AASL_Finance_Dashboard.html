@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AASL — Finance Segment Analysis</title>
+<style>
+  :root{
+    --navy:#0B1F3A;
+    --navy-deep:#071527;
+    --paper:#F4F2ED;
+    --ink:#1B2430;
+    --gold:#B8933F;
+    --red:#A5432F;
+    --green:#3F6B4D;
+    --line:#26374F;
+    --muted:#8FA1B8;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--navy-deep); color:var(--paper);
+    font-family:'Iowan Old Style','Palatino Linotype',Georgia,serif;
+    overflow:hidden;
+  }
+  .mono{font-family:'Courier New',ui-monospace,monospace;}
+  .app{display:grid; grid-template-columns:270px 1fr; height:100vh; transition:grid-template-columns .25s ease;}
+  .app.collapsed{grid-template-columns:0px 1fr;}
+  .side{
+    background:var(--navy); border-right:1px solid var(--line);
+    padding:28px 0; overflow-y:auto; overflow-x:hidden; height:100vh;
+    transition:padding .25s ease;
+  }
+  .app.collapsed .side{padding-left:0; padding-right:0; border-right:none; overflow:hidden;}
+
+  .toggle-btn{
+    position:fixed; top:20px; left:266px; z-index:50;
+    width:28px; height:28px; border-radius:50%;
+    background:var(--navy); border:1px solid var(--gold);
+    color:var(--gold); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:13px; transition:left .25s ease;
+    box-shadow:0 2px 6px rgba(0,0,0,0.4);
+  }
+  .toggle-btn:hover{background:var(--gold); color:var(--navy-deep);}
+  .app.collapsed .toggle-btn{left:12px;}
+  .brand{padding:0 24px 20px; border-bottom:1px solid var(--line); margin-bottom:14px;}
+  .brand .name{font-size:20px; letter-spacing:.5px;}
+  .brand .sub{font-family:'Courier New',monospace; font-size:10.5px; color:var(--muted); margin-top:4px; letter-spacing:.5px;}
+  .segment-label{
+    font-family:'Courier New',monospace; font-size:10px; letter-spacing:2px;
+    color:var(--gold); padding:16px 24px 8px; text-transform:uppercase;
+  }
+  .navitem{
+    display:flex; gap:12px; align-items:flex-start;
+    padding:10px 24px; cursor:pointer; font-size:14px; color:var(--muted);
+    border-left:3px solid transparent; line-height:1.4;
+  }
+  .navitem span:last-child{white-space:normal; word-wrap:break-word;}
+  .navitem .num{font-family:'Courier New',monospace; font-size:11px; color:var(--line); min-width:22px; flex-shrink:0;}
+  .navitem:hover{background:rgba(184,147,63,0.06); color:var(--paper);}
+  .navitem.active{
+    background:rgba(184,147,63,0.1); color:var(--paper);
+    border-left:3px solid var(--gold);
+  }
+  .navitem.active .num{color:var(--gold);}
+  .navitem.disabled{opacity:.35; cursor:default;}
+  .navitem.disabled:hover{background:none; color:var(--muted);}
+
+  .main{height:100vh; overflow-y:auto; padding:48px 56px 100px;}
+  .main-inner{max-width:920px; margin:0 auto;}
+  .pagehead{border-bottom:2px solid var(--gold); padding-bottom:18px; margin-bottom:32px;}
+  .eyebrow{font-family:'Courier New',monospace; font-size:11px; letter-spacing:2px; color:var(--gold); text-transform:uppercase;}
+  h1{font-size:32px; margin:8px 0 6px; font-weight:500; line-height:1.15;}
+  .entity{color:var(--muted); font-size:14px;}
+
+  .callout{
+    border:1px solid var(--line); background:rgba(255,255,255,0.02);
+    padding:18px 20px; margin:20px 0; border-radius:3px;
+  }
+  .callout.warn{border-color:var(--red); background:rgba(165,67,47,0.08);}
+  .callout.ok{border-color:var(--green); background:rgba(63,107,77,0.08);}
+  .callout .tag{font-family:'Courier New',monospace; font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold); margin-bottom:8px; display:block;}
+  .callout.warn .tag{color:#D98A6F;}
+  .callout.ok .tag{color:#7FBF98;}
+  .callout p{margin:6px 0; font-size:14.5px; line-height:1.65; color:#DCE3EC;}
+
+  .tablewrap{overflow-x:auto; margin:16px 0 30px; border:1px solid var(--line);}
+  table{width:100%; border-collapse:collapse; font-size:13px; min-width:480px;}
+  th{
+    font-family:'Courier New',monospace; font-size:10.5px; letter-spacing:1px;
+    text-transform:uppercase; color:var(--gold); text-align:right; padding:10px 14px;
+    border-bottom:1px solid var(--gold); white-space:nowrap;
+  }
+  th:first-child{text-align:left;}
+  td{padding:8px 14px; text-align:right; border-bottom:1px solid var(--line); font-family:'Courier New',monospace; font-size:12.5px; color:#DCE3EC; white-space:nowrap;}
+  td:first-child{text-align:left; font-family:'Iowan Old Style',Georgia,serif; font-size:13px; white-space:normal;}
+  tr:hover td{background:rgba(255,255,255,0.03);}
+  .neg{color:#D98A6F;}
+  .pos{color:#7FBF98;}
+  .fy-row td{background:rgba(184,147,63,0.08); font-weight:bold; border-top:1px solid var(--gold);}
+
+  .section-title{font-size:18px; margin:36px 0 8px; color:var(--paper); border-left:3px solid var(--gold); padding-left:12px;}
+  .section-sub{color:var(--muted); font-size:13px; margin:0 0 16px 15px;}
+
+  .chartwrap{border:1px solid var(--line); padding:24px; margin:18px 0 32px; background:rgba(255,255,255,0.015); overflow-x:auto;}
+  svg text{font-family:'Courier New',monospace;}
+
+  .placeholder{
+    text-align:center; padding:90px 20px; color:var(--muted);
+    border:1px dashed var(--line); margin-top:30px;
+  }
+  .placeholder .big{font-family:'Courier New',monospace; font-size:13px; letter-spacing:2px; color:var(--gold); margin-bottom:10px;}
+
+  .footnote{font-size:11.5px; color:var(--muted); margin-top:30px; padding-top:16px; border-top:1px solid var(--line); line-height:1.6;}
+  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:16px; margin:22px 0 12px;}
+  .kpi{border:1px solid var(--line); padding:16px 20px; background:rgba(255,255,255,0.02);}
+  .kpi .label{font-family:'Courier New',monospace; font-size:10px; letter-spacing:1px; color:var(--muted); text-transform:uppercase;}
+  .kpi .value{font-size:23px; margin-top:8px; font-family:'Courier New',monospace;}
+
+  ::-webkit-scrollbar{width:10px; height:10px;}
+  ::-webkit-scrollbar-track{background:var(--navy-deep);}
+  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:5px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+
+  @media (max-width: 860px){
+    .app{grid-template-columns:1fr; height:auto;}
+    .side{height:auto; position:relative;}
+    .main{height:auto; padding:32px 20px 80px;}
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()">&#8592;</div>
+  <div class="side" id="sideNav">
+    <div class="brand">
+      <div class="name">AASL Deep Dive</div>
+      <div class="sub mono">AKIJ AIR SERVICE LTD · BU-245</div>
+    </div>
+    <div class="segment-label">Segment 1 — Finance</div>
+    <div id="nav"></div>
+    <div class="segment-label" style="margin-top:18px; opacity:.4;">Segment 2 — Assets (locked)</div>
+    <div class="segment-label" style="opacity:.4;">Segment 3 — Partners (locked)</div>
+  </div>
+  <div class="main"><div class="main-inner" id="main"></div></div>
+</div>
+
+<script>
+const romans = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII"];
+const groups = [
+  {id:1, roman:"I", title:"Income Statement — Trend & Structure", status:"done"},
+  {id:2, roman:"II", title:"Balance Sheet & Cash Flow (derived)", status:"done"},
+  {id:3, roman:"III", title:"Profitability Analysis", status:"done"},
+  {id:4, roman:"IV", title:"Liquidity Analysis", status:"done"},
+  {id:5, roman:"V", title:"Leverage & Solvency", status:"done"},
+  {id:6, roman:"VI", title:"Efficiency Analysis", status:"done"},
+  {id:7, roman:"VII", title:"Cost Structure & Drivers", status:"done"},
+  {id:8, roman:"VIII", title:"Related-Party / Governance", status:"done"},
+  {id:9, roman:"IX", title:"Tax Analysis", status:"done"},
+  {id:10, roman:"X", title:"Quality of Earnings", status:"done"},
+  {id:11, roman:"XI", title:"Trend & Time-Series Diagnostics", status:"done"},
+  {id:12, roman:"XII", title:"Red Flag / Forensic Scan", status:"done"},
+];
+
+const monthly = [{"period": "2024-02", "clean_revenue": 14536, "wallet_mechanic": 33989.0, "total_expense": 0, "other_income": 0, "net_result": 14536, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-03", "clean_revenue": -23320.0, "wallet_mechanic": 0, "total_expense": 0, "other_income": 0, "net_result": -23320.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-04", "clean_revenue": -38443.0, "wallet_mechanic": 1098709.0, "total_expense": 0, "other_income": 0, "net_result": -38443.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-05", "clean_revenue": 100582, "wallet_mechanic": 249002.0, "total_expense": 0, "other_income": 0, "net_result": 100582, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-06", "clean_revenue": -101622.0, "wallet_mechanic": 166539, "total_expense": 0, "other_income": 0, "net_result": -101622.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-07", "clean_revenue": 23160.0, "wallet_mechanic": 366259, "total_expense": 0, "other_income": 0, "net_result": 23160.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-08", "clean_revenue": -3598.0, "wallet_mechanic": 28080, "total_expense": 0, "other_income": 0, "net_result": -3598.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-09", "clean_revenue": -78301.0, "wallet_mechanic": 273570.0, "total_expense": 0, "other_income": 0, "net_result": -78301.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-10", "clean_revenue": -353823.0, "wallet_mechanic": 662828, "total_expense": 86686.0, "other_income": 0, "net_result": -440509.0, "selling": 86686.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-11", "clean_revenue": -2689961.0, "wallet_mechanic": 1059687.0, "total_expense": 1038652.0, "other_income": 0, "net_result": -3728613.0, "selling": 1038652.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-12", "clean_revenue": -573190.0, "wallet_mechanic": 625923.0, "total_expense": 511368.0, "other_income": 0, "net_result": -1084558.0, "selling": 511368.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-01", "clean_revenue": 2755100.0, "wallet_mechanic": 6139568.0, "total_expense": 1069910.0, "other_income": 0, "net_result": 1685190.0, "selling": 1069910.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-02", "clean_revenue": -3219579.0, "wallet_mechanic": 7295740.0, "total_expense": 1867862.0, "other_income": 0, "net_result": -5087441.0, "selling": 1867862.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-03", "clean_revenue": -1515845.0, "wallet_mechanic": 5222496.0, "total_expense": 2903809.0, "other_income": 0, "net_result": -4419655.0, "selling": 2903809.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-04", "clean_revenue": -2801543.0, "wallet_mechanic": 5294111.0, "total_expense": 2982196.0, "other_income": 0, "net_result": -5783739.0, "selling": 2982196.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-05", "clean_revenue": 9684900.0, "wallet_mechanic": 7572531.0, "total_expense": 5301018.0, "other_income": 0, "net_result": 4383881.0, "selling": 5301018.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-06", "clean_revenue": 7174672.0, "wallet_mechanic": 13664718.0, "total_expense": 8918856.0, "other_income": 0, "net_result": -1744184.0, "selling": 8918856.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-07", "clean_revenue": 12641567.0, "wallet_mechanic": 18285502.0, "total_expense": 26131283.0, "other_income": 0, "net_result": -13489716.0, "selling": 26131283.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-08", "clean_revenue": 8914317.0, "wallet_mechanic": 43203159.0, "total_expense": 20161573.0, "other_income": 0, "net_result": -11247256.0, "selling": 20161573.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-09", "clean_revenue": -9252874.0, "wallet_mechanic": -49862940.0, "total_expense": 15038673.0, "other_income": 0, "net_result": -24291548.0, "selling": 15026757.0, "admin": 0, "operating": 0, "financial": 11917.0, "depreciation": 0, "marketing": 0}, {"period": "2025-10", "clean_revenue": -12691926.0, "wallet_mechanic": 24712196.0, "total_expense": 13813995.0, "other_income": 0, "net_result": -26505921.0, "selling": 13801681.0, "admin": 0, "operating": 0, "financial": 12314.0, "depreciation": 0, "marketing": 0}, {"period": "2025-11", "clean_revenue": -18231059.0, "wallet_mechanic": 32611029.0, "total_expense": 13469507.0, "other_income": 0, "net_result": -31700566.0, "selling": 13457590.0, "admin": 0, "operating": 0, "financial": 11917.0, "depreciation": 0, "marketing": 0}, {"period": "2025-12", "clean_revenue": -28687953.0, "wallet_mechanic": 18856165.0, "total_expense": 16556492.0, "other_income": 0, "net_result": -45244445.0, "selling": 15186524.0, "admin": 520340.0, "operating": 0, "financial": 849629.0, "depreciation": 0, "marketing": 0}, {"period": "2026-01", "clean_revenue": 13081468.0, "wallet_mechanic": -12212825.0, "total_expense": 7319210.0, "other_income": 0, "net_result": 5762257.0, "selling": 3009026.0, "admin": 1352962.0, "operating": 2342788.0, "financial": 402314.0, "depreciation": 212121.0, "marketing": 0}, {"period": "2026-02", "clean_revenue": -7049571.0, "wallet_mechanic": -17186271.0, "total_expense": 13265496.0, "other_income": 402580.0, "net_result": -19912488.0, "selling": 1936954.0, "admin": 3238291.0, "operating": 7115811.0, "financial": 762318.0, "depreciation": 212121.0, "marketing": 0}, {"period": "2026-03", "clean_revenue": -6754738.0, "wallet_mechanic": 6456577.0, "total_expense": 14073728.0, "other_income": 27494.0, "net_result": -20800972.0, "selling": 2917948.0, "admin": 3208148.0, "operating": 6803451.0, "financial": 909332.0, "depreciation": 234849.0, "marketing": 0}, {"period": "2026-04", "clean_revenue": -6974080.0, "wallet_mechanic": -8397862.0, "total_expense": 12611471.0, "other_income": 472736.0, "net_result": -19112816.0, "selling": 1894912.0, "admin": 1557801.0, "operating": 7045952.0, "financial": 1885533.0, "depreciation": 227273.0, "marketing": 0}, {"period": "2026-05", "clean_revenue": -4378517.0, "wallet_mechanic": -15727942.0, "total_expense": 14954472.0, "other_income": 1975617.0, "net_result": -17357371.0, "selling": 5004132.0, "admin": 3318447.0, "operating": 5381017.0, "financial": 1016028.0, "depreciation": 234849.0, "marketing": 0}, {"period": "2026-06", "clean_revenue": -3970616.0, "wallet_mechanic": -5961248.0, "total_expense": 21982923.0, "other_income": 561891.0, "net_result": -25391648.0, "selling": 4892640.0, "admin": 1604061.0, "operating": 14123205.0, "financial": 1084679.0, "depreciation": 227273.0, "marketing": 51066.0}, {"period": "2026-07", "clean_revenue": -701561.0, "wallet_mechanic": -5732174, "total_expense": 7578521.0, "other_income": 149.0, "net_result": -8279933.0, "selling": 4309841.0, "admin": 386562.0, "operating": 1475229.0, "financial": 185188.0, "depreciation": 37879.0, "marketing": 1183821.0}];
+
+function fyKey(period){
+  const [y,m] = period.split('-').map(Number);
+  return m>=7 ? `FY${y+1}` : `FY${y}`;
+}
+const fy = {};
+monthly.forEach(r=>{
+  const k = fyKey(r.period);
+  fy[k] = fy[k] || {clean_revenue:0,total_expense:0,net_result:0};
+  fy[k].clean_revenue += r.clean_revenue;
+  fy[k].total_expense += r.total_expense;
+  fy[k].net_result += r.net_result;
+});
+
+function fmt(n){
+  const v = Math.round(n);
+  const s = Math.abs(v).toLocaleString('en-US');
+  return (v<0? '('+s+')' : s);
+}
+function cls(n){ return n<0 ? 'neg' : (n>0?'pos':''); }
+
+function renderNav(activeId){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = groups.map(g=>{
+    const disabled = g.status==='pending' ? 'disabled' : '';
+    const active = g.id===activeId ? 'active' : '';
+    return `<div class="navitem ${active} ${disabled}" onclick="${g.status==='done'?`go(${g.id})`:''}">
+      <span class="num">${g.roman}</span>
+      <span>${g.title}${g.status==='pending'?' — pending':''}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderChart(){
+  const w=1080, h=260, padL=50, padB=26, padT=10;
+  const vals = monthly.map(r=>r.net_result);
+  const max = Math.max(...vals, 0);
+  const min = Math.min(...vals, 0);
+  const range = max-min || 1;
+  const barW = (w-padL-20)/monthly.length;
+  const zeroY = padT + (max/range)*(h-padT-padB);
+
+  let bars = monthly.map((r,i)=>{
+    const x = padL + i*barW;
+    const barH = Math.abs(r.net_result)/range*(h-padT-padB);
+    const y = r.net_result>=0 ? zeroY-barH : zeroY;
+    const color = r.net_result>=0 ? '#7FBF98' : '#A5432F';
+    return `<rect x="${x+1}" y="${y}" width="${barW-2}" height="${Math.max(barH,1)}" fill="${color}" opacity="0.85"/>`;
+  }).join('');
+
+  let labels = monthly.map((r,i)=>{
+    if(i%3!==0) return '';
+    const x = padL + i*barW + barW/2;
+    return `<text x="${x}" y="${h-8}" font-size="9" fill="#8FA1B8" text-anchor="middle">${r.period.slice(2)}</text>`;
+  }).join('');
+
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}">
+    <line x1="${padL}" y1="${zeroY}" x2="${w-10}" y2="${zeroY}" stroke="#B8933F" stroke-width="1"/>
+    ${bars}
+    ${labels}
+    <text x="${padL}" y="14" font-size="10" fill="#8FA1B8">Monthly Net Result (BDT), Feb 2024 — Jul 2026</text>
+  </svg>`;
+}
+
+function renderGroup1(){
+  const fyRows = Object.keys(fy).sort().map(k=>{
+    const r = fy[k];
+    return `<tr class="fy-row"><td>${k}</td><td class="${cls(r.clean_revenue)}">${fmt(r.clean_revenue)}</td>
+      <td>${fmt(r.total_expense)}</td><td class="${cls(r.net_result)}">${fmt(r.net_result)}</td></tr>`;
+  }).join('');
+
+  const monthlyRows = monthly.map(r=>{
+    return `<tr><td>${r.period}</td><td class="${cls(r.clean_revenue)}">${fmt(r.clean_revenue)}</td>
+      <td>${fmt(r.selling)}</td><td>${fmt(r.admin)}</td><td>${fmt(r.operating)}</td>
+      <td>${fmt(r.financial)}</td><td>${fmt(r.depreciation+r.marketing)}</td>
+      <td class="${cls(r.net_result)}">${fmt(r.net_result)}</td></tr>`;
+  }).join('');
+
+  const totalNet = monthly.reduce((a,r)=>a+r.net_result,0);
+  const totalRev = monthly.reduce((a,r)=>a+r.clean_revenue,0);
+  const totalExp = monthly.reduce((a,r)=>a+r.total_expense,0);
+
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · I</span>
+      <h1>Income Statement — Trend &amp; Structure</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · Feb 2024 — Jul 2026</div>
+    </div>
+
+    <div class="callout ok">
+      <span class="tag">Data integrity — passed</span>
+      <p>Every month in the full ledger (Feb 2022 — Jul 2026) nets to exactly zero (debits = credits). The <span class="mono">_Duplicate</span> journal table was found to be a stale/incomplete mirror (14,589 fewer entries) and was excluded — <span class="mono">fin.tblAccountingJournal</span> is used as the sole source throughout.</p>
+    </div>
+
+    <div class="callout warn">
+      <span class="tag">Revenue quality — contaminated</span>
+      <p>The "Sales (Local)" GL account is not a clean revenue line. AASL runs a B2B travel/ticketing wallet ledger (Hajj/Umrah, group tour bookings) through this account, mixing genuine service revenue with agent wallet top-ups, withdrawals, and refunds. A single ৳91.0M "wrong topup" reversal in Sep 2025 alone exceeds the entire FY2026 net revenue swing.</p>
+      <p>The figures below use a best-effort narration-based filter (excluding entries tagged Topup / Balance transfer / Agent-Debit-Memo / Refund) to isolate "clean" revenue. Even this filtered bucket retains high transaction volume and volatility — full separation is not reliably achievable from narration text alone. Treat "Clean Revenue" below as a defensible estimate, not an exact figure.</p>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Total Net Result</div><div class="value neg">${fmt(totalNet)}</div></div>
+      <div class="kpi"><div class="label">Total Clean Revenue</div><div class="value ${cls(totalRev)}">${fmt(totalRev)}</div></div>
+      <div class="kpi"><div class="label">Total Expense</div><div class="value">${fmt(totalExp)}</div></div>
+      <div class="kpi"><div class="label">Months w/ Positive Result</div><div class="value">${monthly.filter(r=>r.net_result>0).length} / ${monthly.length}</div></div>
+    </div>
+
+    <div class="section-title">Fiscal-Year Summary (Jul–Jun)</div>
+    <div class="section-sub">FY2024 and FY2027 are partial periods (data starts Feb-2024; ends Jul-2026)</div>
+    <div class="tablewrap"><table>
+      <tr><th>Fiscal Year</th><th>Clean Revenue</th><th>Total Expense</th><th>Net Result</th></tr>
+      ${fyRows}
+    </table></div>
+
+    <div class="section-title">Monthly Net Result</div>
+    <div class="chartwrap">${renderChart()}</div>
+
+    <div class="section-title">Monthly Detail — Full Cost Structure</div>
+    <div class="section-sub">All figures BDT. Parentheses = negative. "Other" = Depreciation + Marketing combined.</div>
+    <div class="tablewrap"><table>
+      <tr><th>Period</th><th>Clean Rev.</th><th>Selling</th><th>Admin</th><th>Operating</th><th>Financial</th><th>Other</th><th>Net Result</th></tr>
+      ${monthlyRows}
+    </table></div>
+
+    <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245. Expense-side GL classification only becomes materially complete from Sep-2025 onward — pre-Sep-2025 "profit" figures likely understate true cost and should not be read as clean profitability.</p>
+
+    <div class="section-title">Revenue Volatility &amp; Growth</div>
+    <div class="tablewrap"><table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Mean monthly revenue</td><td class="neg">(1,856,727)</td></tr>
+      <tr><td>Std. deviation</td><td>8,447,672</td></tr>
+      <tr><td>Coefficient of Variation</td><td>4.55</td></tr>
+      <tr><td>CAGR</td><td>Not computable — sign-flipping revenue, no valid compounding base</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Finding</span>
+      <p>CoV of 4.55 means volatility is 4.5&times; the mean — this is not a business with a trend, it's a business with noise. No stable growth rate exists to report.</p>
+    </div>
+
+    <div class="section-title">Common-Size Structure — FY2026</div>
+    <div class="section-sub">Base = Total Expense, not Revenue (FY2026 revenue is net-negative, an invalid denominator)</div>
+    <div class="tablewrap"><table>
+      <tr><th>Line</th><th>Amount</th><th>% of Total Expense</th></tr>
+      <tr><td>Selling Expenses</td><td>123,421,020</td><td><b>65.2%</b></td></tr>
+      <tr><td>Operating Expenses</td><td>42,812,224</td><td>22.6%</td></tr>
+      <tr><td>Administrative Expenses</td><td>14,800,050</td><td>7.8%</td></tr>
+      <tr><td>Financial Expenses</td><td>6,945,981</td><td>3.7%</td></tr>
+      <tr><td>Depreciation</td><td>1,348,486</td><td>0.7%</td></tr>
+      <tr><td>Marketing</td><td>51,066</td><td>0.0%</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Finding</span>
+      <p>Selling expense alone is nearly two-thirds of total cost — the dominant driver by far. Gross/Operating/Net margins are not computable in any period — every year either lacks full expense classification or has a negative revenue denominator.</p>
+    </div>
+
+    <div class="section-title">Operating Leverage</div>
+    <div class="tablewrap"><table>
+      <tr><th></th><th>FY2025</th><th>FY2026</th><th>Growth</th></tr>
+      <tr><td>Gross transaction volume (scale proxy)</td><td>79,079,183</td><td>386,102,402</td><td class="pos">+388%</td></tr>
+      <tr><td>Total expense</td><td>24,680,357 (partial)</td><td>189,378,827</td><td class="neg">+667%</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Finding — negative operating leverage</span>
+      <p>Costs grew nearly 2&times; as fast as the underlying business scale. This directly explains the widening losses in the Net Result trend above.</p>
+    </div>
+
+    <div class="section-title">Contribution Margin Proxy — FY2026</div>
+    <div class="tablewrap"><table>
+      <tr><th>Classification</th><th>Amount</th><th>% of Total</th></tr>
+      <tr><td>Fixed (Admin + Depreciation)</td><td>16,148,536</td><td>8.5%</td></tr>
+      <tr><td>Variable (Selling + Operating + Marketing)</td><td>166,284,310</td><td>87.8%</td></tr>
+      <tr><td>Financial (debt service, separate)</td><td>6,945,981</td><td>3.7%</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Finding</span>
+      <p>Cost structure is ~88% variable. Combined with the operating leverage finding above, unit economics per transaction appear to be deteriorating, not just the fixed-cost burden.</p>
+    </div>
+  `;
+}
+
+function renderGroup2(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · II — Derived, not pulled</span>
+      <h1>Balance Sheet &amp; Cash Flow (Reconstructed)</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · derived from fin.tblAccountingJournal</div>
+    </div>
+
+    <div class="callout warn">
+      <span class="tag">Methodology caveat</span>
+      <p>No formal balance sheet or cash flow table exists in this database. Everything below is reconstructed from cumulative General Ledger balances. Exact debit/credit sign convention per account type has not been independently validated against a live iBOS report — treat direction (growing/shrinking) as more reliable than the absolute sign shown.</p>
+    </div>
+
+    <div class="section-title">I-B: Balance Sheet Positions (Cumulative GL Balances, as of Jul 2026)</div>
+    <div class="tablewrap"><table>
+      <tr><th>GL Account</th><th>Cumulative Balance</th><th>FY25 → FY26 Trend</th></tr>
+      <tr><td>Cash at Bank</td><td class="neg">(402,378,194)</td><td>Deepened from (382.5M)</td></tr>
+      <tr><td>Trade Receivable (Local)</td><td class="pos">115,819,836</td><td>Grew from 100.3M</td></tr>
+      <tr><td>Payable against Suppliers</td><td class="pos">81,476,352</td><td class="neg">Fell sharply from 198.7M</td></tr>
+      <tr><td>Inter Company Balance</td><td class="neg">(110,699,406)</td><td>New / growing (was ~0)</td></tr>
+      <tr><td>Investment</td><td class="pos">61,573,151</td><td>New in FY2026 (was 0)</td></tr>
+      <tr><td>Advance Suppliers &amp; Others</td><td class="pos">31,352,500</td><td>New in FY2026</td></tr>
+      <tr><td>Payable against Expenses</td><td class="pos">9,843,543</td><td>Up from ~0</td></tr>
+      <tr><td>Advances Income Tax</td><td class="pos">8,508,091</td><td>Growing steadily</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Finding</span>
+      <p>Payable against Suppliers fell ~102.7M while Investment (+61.6M) and Inter Company Balance (-110.7M) appeared suddenly in FY2026 — consistent with AASL paying down supplier obligations while taking on new intercompany financing and making an investment. Needs confirmation in Group V (Related-Party) before drawing conclusions.</p>
+    </div>
+
+    <div class="section-title">I-C: Cash Flow Analysis — Indirect Method (FY2026)</div>
+    <div class="tablewrap"><table>
+      <tr><th>Component</th><th>Amount</th></tr>
+      <tr><td>Net Income (from Group I)</td><td class="neg">(249,292,490)</td></tr>
+      <tr><td>+ Depreciation add-back</td><td class="pos">1,348,486</td></tr>
+      <tr><td>− Increase in Receivables</td><td class="neg">(7,151,246)</td></tr>
+      <tr><td>− Decrease in Payables (use of cash)</td><td class="neg">(102,699,932)</td></tr>
+      <tr class="fy-row"><td>= CFO (indirect, partial)</td><td class="neg">(357,795,182)</td></tr>
+    </table></div>
+
+    <div class="callout warn">
+      <span class="tag">Reconciliation gap — 329M unexplained</span>
+      <p>Actual Cash at Bank movement FY25→FY26 was only (28,653,440) per the GL directly — not (357.8M). The gap is explained by Financing/Investing items not in this Operating-only formula: Inter Company Balance (-110.7M), Investment (+61.6M), and Advance Suppliers (+31.4M) all moved materially in FY2026. A complete 3-line cash flow statement (Operating / Investing / Financing) is needed to close this gap properly — planned for after Group V (Related-Party) and Segment 2 (Assets).</p>
+    </div>
+
+    <div class="callout">
+      <span class="tag">Free Cash Flow — blocked</span>
+      <p>FCF = CFO − CapEx cannot be computed yet. CapEx requires Asset Additions data, deferred to Segment 2 (Assets). Only one loose "Building &amp; Construction" entry (৳4.7M) exists in the finance ledger and is not a reliable CapEx figure on its own.</p>
+    </div>
+
+    <div class="callout">
+      <span class="tag">Cash conversion — verdict pending</span>
+      <p>With a 329M reconciliation gap, no trustworthy verdict on "does profit convert to cash" can be given yet. Requires Group V (Inter Company) and Segment 2 (Assets) data first.</p>
+    </div>
+
+    <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245. Cumulative balances computed as running sum of numAmount per GL account from first ledger entry (Feb 2022) through Jul 2026.</p>
+  `;
+}
+
+function renderGroup3(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · III</span>
+      <h1>Profitability Analysis</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY2026</div>
+    </div>
+
+    <div class="callout warn">
+      <span class="tag">Margins — still blocked</span>
+      <p>Gross/EBIT/EBITDA/Net margin trends are not computable — revenue is negative or unreliable in every period (same root cause as Group I). Reporting a margin % against a broken denominator would be false precision, so none is shown.</p>
+    </div>
+
+    <div class="section-title">Fixed Asset Base (ast.tblAsset, BU-245)</div>
+    <div class="tablewrap"><table>
+      <tr><th>Asset Category</th><th>Book Value</th></tr>
+      <tr><td>Building &amp; Construction</td><td>4,700,000</td></tr>
+      <tr><td>Furniture &amp; Fixture</td><td>2,581,512</td></tr>
+      <tr><td>Phone/Fax/Electrical/IT Equipment</td><td>1,982,853</td></tr>
+      <tr><td>Plant &amp; Machinery</td><td>667,900</td></tr>
+      <tr><td>Gas/Water/Electric Installation</td><td>93,000</td></tr>
+      <tr class="fy-row"><td>Total Fixed Assets</td><td>10,025,265</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Major finding</span>
+      <p>AASL owns no aircraft, no fleet, no significant plant — its entire fixed asset base is ~10M BDT of office furniture, IT equipment, and one small building item. This confirms the earlier ticketing-narration discovery: <b>AASL is not an aviation operator, it is an asset-light travel/ticketing agency</b> trading under the "Air Service" name.</p>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Asset Turnover (vs. Fixed Assets)</div><div class="value">38.5&times;</div></div>
+      <div class="kpi"><div class="label">ROA</div><div class="value">Blocked</div></div>
+      <div class="kpi"><div class="label">DuPont Decomposition</div><div class="value">Blocked</div></div>
+    </div>
+    <p class="footnote">ROA needs Total Assets (fixed + cash + receivables), but cash/receivable signs are still unvalidated from Group II. DuPont needs a working Net Margin and an equity figure — both unavailable. Reporting either would be fabricated precision.</p>
+
+    <div class="section-title">Segment / Cost-Center Profitability — FY2026</div>
+    <div class="section-sub">Using strCostRevenueName tags on the journal as the segment dimension</div>
+    <div class="tablewrap"><table>
+      <tr><th>Segment</th><th>Revenue</th><th>Expense</th><th>Net Result</th></tr>
+      <tr><td>(Unassigned)</td><td class="neg">(80,574,931)</td><td>133,609,740</td><td class="neg">(211,168,037)</td></tr>
+      <tr><td>B2B</td><td class="pos">47,213,275</td><td>14,091,476</td><td class="pos">33,121,799</td></tr>
+      <tr><td>Sales (overhead)</td><td>0</td><td>15,627,797</td><td class="neg">(15,627,797)</td></tr>
+      <tr><td>Procurement (overhead)</td><td>0</td><td>13,511,524</td><td class="neg">(13,511,524)</td></tr>
+      <tr><td>HR &amp; Administration</td><td>0</td><td>9,934,479</td><td class="neg">(9,934,479)</td></tr>
+      <tr><td>NA (interest)</td><td>0</td><td>5,288,840</td><td class="neg">(5,288,840)</td></tr>
+      <tr><td>airservice</td><td class="neg">(1,659,112)</td><td>1,467,789</td><td class="neg">(3,126,901)</td></tr>
+      <tr><td>Finance</td><td>0</td><td>3,382,608</td><td class="neg">(3,382,608)</td></tr>
+      <tr><td>B2C</td><td>0</td><td>0</td><td class="pos">424,249</td></tr>
+      <tr><td>Marketing</td><td>0</td><td>51,066</td><td class="neg">(51,066)</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Critical finding</span>
+      <p>The B2B travel-agent segment is actually profitable (+33.1M). The entire loss is concentrated in the "(Unassigned)" bucket (-211.2M) — meaning roughly 90% of AASL's transactions aren't tagged to any cost/revenue segment at all. Either a data-tagging discipline problem, or that bucket holds the bulk of true operating activity left unclassified. This is the single most important thread to pull next.</p>
+    </div>
+
+    <p class="footnote">Source: fin.tblAccountingJournal + ast.tblAsset, iBOSDDD, BU-245.</p>
+  `;
+}
+
+function renderGroup4(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · IV</span>
+      <h1>Liquidity Analysis</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · As of Jul 6, 2026</div>
+    </div>
+
+    <div class="section-title">Bank Account Concentration</div>
+    <div class="tablewrap"><table>
+      <tr><th>Bank</th><th>Titled As</th><th>Balance</th><th>% of Cash</th></tr>
+      <tr><td>BRAC Bank Ltd</td><td>Akij Logistics Ltd.</td><td>52,756,137</td><td><b>94.7%</b></td></tr>
+      <tr><td>The City Bank Ltd</td><td>Akij Logistics Ltd.</td><td>1,370,139</td><td>2.5%</td></tr>
+      <tr><td>Islami Bank Bangladesh Ltd</td><td>Akij Logistics Ltd.</td><td>786,849</td><td>1.4%</td></tr>
+      <tr><td>Dutch-Bangla Bank Ltd</td><td>Akij Logistics Ltd.</td><td>686,977</td><td>1.2%</td></tr>
+      <tr><td>Dutch-Bangla Bank Ltd</td><td>Akij Air Service Ltd (own name)</td><td>97,700</td><td>0.2%</td></tr>
+      <tr><td>BRAC Bank Ltd</td><td>Akij Air Service Ltd (own name)</td><td class="neg">(575)</td><td>~0%</td></tr>
+      <tr class="fy-row"><td>Total</td><td></td><td>55,697,227</td><td>100%</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Critical finding — bank concentration &amp; related-party risk</span>
+      <p>94.7% of AASL's actual cash sits in a single bank account legally titled "Akij Logistics Ltd." — a different entity, not AASL's own name. The two accounts actually titled "Akij Air Service Ltd" hold almost nothing (~97K combined) and went dormant mid-2026. This is a real governance risk, not a modeling artifact, and should be examined further in Group VIII (Related-Party).</p>
+    </div>
+    <div class="callout">
+      <span class="tag">Note — corrects Group II</span>
+      <p>This real, reconciled bank balance (55.7M) contradicts the cumulative GL "Cash at Bank" figure from Group II (-402M). That confirms the GL figure was distorted by wallet-mechanic/clearing entries and should not be trusted as an actual cash balance.</p>
+    </div>
+
+    <div class="section-title">Days-of-Cash-on-Hand &amp; Burn Rate</div>
+    <div class="tablewrap"><table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Total cash on hand</td><td>55,697,227</td></tr>
+      <tr><td>FY2026 Net Result (loss)</td><td class="neg">(249,292,490)</td></tr>
+      <tr><td>Avg. monthly burn</td><td>20,774,374</td></tr>
+      <tr><td>Avg. daily burn</td><td>682,700</td></tr>
+      <tr class="fy-row"><td>Days of Cash on Hand</td><td>~81.6 days</td></tr>
+      <tr class="fy-row"><td>Cash Runway</td><td>~2.7 months</td></tr>
+    </table></div>
+
+    <div class="section-title">Current Ratio Proxy</div>
+    <div class="tablewrap"><table>
+      <tr><th>Component</th><th>Value</th></tr>
+      <tr><td>Cash</td><td>55,697,227</td></tr>
+      <tr><td>+ Trade Receivable</td><td>115,819,836</td></tr>
+      <tr><td>÷ Payable against Suppliers</td><td>81,476,352</td></tr>
+      <tr class="fy-row"><td>Current Ratio Proxy</td><td>~2.10&times;</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Bottom line</span>
+      <p>AASL has roughly 2.7 months of runway at the current burn rate, with cash overwhelmingly concentrated in a bank account it doesn't hold in its own legal name. The current ratio looks healthy on paper (2.10&times;) but is misleading given the concentration risk and uncertain receivable collectability — this is a real liquidity risk, not just a modeling artifact.</p>
+    </div>
+
+    <p class="footnote">Source: fin.tblBankAccountStatement + fin.tblBankAccount, iBOSDDD, BU-245. Bank balances as of latest reconciled statement entry (Jul 6, 2026).</p>
+  `;
+}
+
+function renderGroup5(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · V</span>
+      <h1>Leverage &amp; Solvency Analysis</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY2026</div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Fin. Expense / Total Expense</div><div class="value">3.7%</div></div>
+      <div class="kpi"><div class="label">Implied Intercompany Rate</div><div class="value">~10.7%</div></div>
+      <div class="kpi"><div class="label">Intercompany Share of New Funding</div><div class="value">~54%</div></div>
+      <div class="kpi"><div class="label">Interest Coverage</div><div class="value">Blocked</div></div>
+    </div>
+
+    <div class="section-title">Implied Intercompany Interest Rate</div>
+    <div class="section-sub">Derived directly from the ledger's own interest accrual sub-account</div>
+    <div class="tablewrap"><table>
+      <tr><th>Period</th><th>Intercompany Principal</th><th>Cumulative Interest Accrued</th></tr>
+      <tr><td>Dec 2025</td><td>1,937,315</td><td>48,461</td></tr>
+      <tr><td>Jan 2026</td><td>70,699,406</td><td>450,775</td></tr>
+      <tr><td>Jul 2026</td><td>110,699,406</td><td>5,288,840</td></tr>
+    </table></div>
+    <div class="callout">
+      <span class="tag">Finding</span>
+      <p>Interest accrued ~4.84M over 6 months on an average balance of ~90.7M &rarr; implied annualized rate ≈ 10.7%. This is derived from the actual interest sub-ledger, not estimated.</p>
+    </div>
+
+    <div class="section-title">Intercompany Funding Dependency</div>
+    <p style="font-size:14px; color:#DCE3EC; line-height:1.6;">Of the three "new funding" sources that appeared in FY2026 (Intercompany Balance +110.7M, Investment +61.6M, Advance Suppliers +31.4M), Intercompany borrowing represents <b>~54% of total new funding</b> tagged this year — the single largest source.</p>
+
+    <div class="section-title">Interest Coverage Proxy</div>
+    <div class="callout warn">
+      <span class="tag">Blocked</span>
+      <p>Needs a working Operating Income figure, which requires clean revenue — still broken from Group I.</p>
+    </div>
+
+    <div class="section-title">Intercompany Borrowing Trend — the real red flag</div>
+    <div class="tablewrap"><table>
+      <tr><th>Month</th><th>Intercompany Draw</th></tr>
+      <tr><td>May 2025</td><td>1,100,000</td></tr>
+      <tr><td>Dec 2025</td><td>837,315</td></tr>
+      <tr><td><b>Jan 2026</b></td><td><b>68,762,091</b></td></tr>
+      <tr><td>Feb 2026</td><td>20,000,000</td></tr>
+      <tr><td>May 2026</td><td>20,000,000</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Finding</span>
+      <p>Intercompany borrowing was negligible through 2025, then exploded with a ৳68.8M single draw in Jan 2026 — the same month AASL's monthly losses were also near their worst. This looks like AASL being kept afloat by intercompany financing precisely when operating losses peaked — a genuine solvency dependency signal, not just a funding preference.</p>
+    </div>
+
+    <p class="footnote">Source: fin.tblAccountingJournal (Inter Company Balance, Inter Company Interest Balance GLs), iBOSDDD, BU-245.</p>
+  `;
+}
+
+function renderGroup6(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · VI</span>
+      <h1>Efficiency Analysis</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY2026 · 75 employees</div>
+    </div>
+
+    <div class="tablewrap"><table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Revenue per employee (gross txn volume proxy)</td><td>5,148,032</td></tr>
+      <tr><td>Cost per employee</td><td>2,525,051</td></tr>
+      <tr><td>Employee Advance total</td><td>1,203,133</td></tr>
+      <tr><td>Advance per employee</td><td>16,042</td></tr>
+      <tr><td>Asset Turnover (cross-ref Group III)</td><td>38.5&times;</td></tr>
+      <tr class="fy-row"><td>Days Payables Outstanding</td><td>~157 days</td></tr>
+      <tr class="fy-row"><td>Days Receivables Outstanding</td><td>~109.5 days</td></tr>
+    </table></div>
+
+    <div class="callout">
+      <span class="tag">Finding</span>
+      <p>Employee advances are small and not a material cash drag (~16K/employee) — this angle isn't a concern.</p>
+    </div>
+    <div class="callout warn">
+      <span class="tag">Finding — stretched payment terms both ways</span>
+      <p>DPO of 157 days is long — AASL is taking over 5 months on average to pay suppliers, consistent with the Group IV liquidity strain (using supplier credit to manage cash rather than genuine efficiency). DRO of ~110 days means cash collection from customers/agents also lags significantly. Combined, this is a business stretching payment terms on both sides to survive, not a sign of efficient working capital management.</p>
+    </div>
+
+    <p class="footnote">Source: fin.tblAccountingJournal + dbo.vwEmployeeProfileAll, iBOSDDD, BU-245. DPO/DRO use Total Expense and Gross Transaction Volume as denominators respectively, since clean Revenue and COGS are unavailable (see Group I).</p>
+  `;
+}
+
+function renderGroup7(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · VII</span>
+      <h1>Cost Structure &amp; Driver Analysis</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · Bill Register, all-time</div>
+    </div>
+
+    <div class="section-title">Cost Waterfall &amp; Fixed/Variable Split</div>
+    <p style="font-size:14px; color:#DCE3EC;">Already established in Groups I &amp; III: Selling 65.2%, Operating 22.6%, Admin 7.8%, Financial 3.7%, Depreciation 0.7%, Marketing 0.0%. Fixed ~8.5%, Variable ~87.8%, Financial ~3.7%.</p>
+
+    <div class="section-title">Vendor / Expense Concentration</div>
+    <div class="tablewrap"><table>
+      <tr><th>Vendor</th><th>Amount</th><th>% of Total</th></tr>
+      <tr><td>Rhythm Tours &amp; Travel Ltd.</td><td>3,527,500</td><td>18.9%</td></tr>
+      <tr><td>Falcon Travels</td><td>3,361,604</td><td>18.0%</td></tr>
+      <tr><td>Junction House BD</td><td>1,761,900</td><td>9.4%</td></tr>
+      <tr><td>Rashida Rashid (individual)</td><td>1,500,000</td><td>8.0%</td></tr>
+      <tr><td>Innovate Solution</td><td>1,400,000</td><td>7.5%</td></tr>
+      <tr class="fy-row"><td>Top 5 total</td><td></td><td>61.7%</td></tr>
+      <tr class="fy-row"><td>Top 15 (of all vendors)</td><td></td><td>90.1%</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Finding</span>
+      <p>Top 5 vendors account for ~62% of all recorded bills, and just 15 vendors cover over 90% of spend. Several top vendors (Rhythm Tours, Falcon Travels, Victoria Tour, Discovery Tours) are themselves travel agencies — reinforcing that AASL operates as a B2B intermediary reselling through other agencies, not as a direct-to-consumer or aviation operator.</p>
+    </div>
+
+    <div class="section-title">Industry Benchmark Sanity Check</div>
+    <div class="callout warn">
+      <span class="tag">Finding — outside industry norms</span>
+      <p>Typical "Cost of Sales" for travel agencies runs 5-20% of revenue, and healthy agencies net 10-30% profit margins (general industry data, not a direct peer comp). AASL's Selling Expense at 65.2% of total cost is dramatically outside that range. Even allowing for AASL's revenue-measurement problems, this scale of selling cost relative to business size is a strong outlier versus industry norms, not just a rounding effect of the broken revenue denominator.</p>
+    </div>
+
+    <p class="footnote">Source: fin.tblBillRegister + fin.tblAccountingJournal, iBOSDDD, BU-245. Benchmark figures from general web-search industry data, not a direct peer comparison.</p>
+  `;
+}
+
+function renderGroup8(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · VIII</span>
+      <h1>Related-Party / Governance Analysis</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
+    </div>
+
+    <div class="section-title">Net Intercompany Position</div>
+    <p style="font-size:14px; color:#DCE3EC;">AASL is a pure net borrower — Inter Company Balance went from ~0 to -110.7M within FY2026, with zero periods showing AASL as a lender. One-directional and growing, not oscillating.</p>
+
+    <div class="section-title">Implied vs. External Benchmark Rate</div>
+    <p style="font-size:14px; color:#DCE3EC;">The ~10.7% implied intercompany rate (Group V) sits in a plausible range for Bangladesh commercial lending, which has generally run low-to-mid teens for working capital facilities in recent years. This doesn't look like an obviously subsidized or punitive rate on its face, though confirming against an actual Bangladesh Bank policy rate would sharpen this.</p>
+
+    <div class="section-title">"Investment Partner" Transactions</div>
+    <div class="callout warn">
+      <span class="tag">Disclosure gap</span>
+      <p>467 entries, net -115,988,246 BDT — and critically, strPartnerName is NULL on every single one. The ledger records this ~116M relationship without identifying which counterparty (which Akij entity) is on the other side. This ~116M relationship cannot be traced to a named entity from the data alone.</p>
+    </div>
+
+    <div class="section-title">Governance Red Flags</div>
+    <div class="tablewrap"><table>
+      <tr><th>Check</th><th>Result</th></tr>
+      <tr><td>Two-Factor Approvals (Journal)</td><td>78 complete</td></tr>
+      <tr><td>Two-Factor Approvals (Reconcile)</td><td>21 complete, 1 incomplete</td></tr>
+      <tr><td>Audit log — normal months</td><td>500 - 1,000 entries</td></tr>
+      <tr><td><b>Audit log — April 2026</b></td><td><b>11,285 entries</b></td></tr>
+    </table></div>
+    <div class="callout">
+      <span class="tag">Finding</span>
+      <p>Two-Factor Approvals show no meaningful red flag (99 of 100 complete). The April 2026 audit spike is real — 82% of it is "Manual Reconcile" activity, coinciding exactly with the large cash swings seen in Groups II &amp; IV (+154M Jan, +196M Mar, -85M Apr). This reads as an intensive manual bank clean-up effort rather than a suspicious pattern, but it's a notable operational event worth knowing about — especially since it coincides with the intercompany funding surge.</p>
+    </div>
+
+    <p class="footnote">Source: fin.tblAccountingJournal, dco.tblAuditLog, dco.tblTwoFactorApproval, iBOSDDD, BU-245.</p>
+  `;
+}
+
+function renderGroup11(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · XI</span>
+      <h1>Trend &amp; Time-Series Diagnostics</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
+    </div>
+
+    <div class="section-title">Year-over-Year Growth Rates</div>
+    <div class="tablewrap"><table>
+      <tr><th>Metric</th><th>FY2025</th><th>FY2026</th><th>Growth</th></tr>
+      <tr><td>Clean Revenue</td><td>8,401,992</td><td class="neg">(63,353,982)</td><td>Sign-flip — not a valid %</td></tr>
+      <tr><td>Total Expense</td><td>24,680,357</td><td>189,378,823</td><td class="neg">+667%</td></tr>
+      <tr><td>Net Result (loss)</td><td class="neg">(16,278,367)</td><td class="neg">(249,292,490)</td><td class="neg">Loss deepened ~15.3&times;</td></tr>
+    </table></div>
+    <div class="callout">
+      <span class="tag">Note</span>
+      <p>Revenue going from positive to negative makes a percentage growth rate mathematically meaningless — no fake number is reported. Qualitatively: revenue went from marginally positive to net negative while costs exploded — the worst possible combination.</p>
+    </div>
+
+    <div class="section-title">Seasonality Detection</div>
+    <div class="callout warn">
+      <span class="tag">Cannot be statistically confirmed yet</span>
+      <p>Only ~14 months of genuinely active data exist (Sep 2025–Jul 2026) — not enough for a real seasonal test, which needs at least 2 full annual cycles. AASL's business (Hajj/Umrah and group travel) is inherently seasonal by nature of the Islamic lunar calendar, so seasonality almost certainly exists, but cannot be proven statistically with this little history. Revisit in 12 months.</p>
+    </div>
+
+    <div class="section-title">Structural Break Test</div>
+    <div class="callout ok">
+      <span class="tag">Resolved — genuine business change</span>
+      <p>Using raw transaction counts (not just FS-mapped ones): Feb 2022–Dec 2023 had only 6 total ledger entries; 2024 grew to ~7,500; 2025-2026 exploded to tens of thousands per month. This is a genuine business scale-up, not a data-tagging artifact — raw entry volume, unaffected by GL mapping, confirms real operational growth.</p>
+    </div>
+
+    <div class="section-title">Volatility / Stability Scoring</div>
+    <div class="tablewrap"><table>
+      <tr><th>Metric</th><th>Coefficient of Variation</th></tr>
+      <tr><td>Revenue</td><td>4.55</td></tr>
+      <tr><td>Net Result</td><td>1.37</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Verdict</span>
+      <p>This is a lumpy, unpredictable business, not one with stable cash flows. A CoV of 1.37 on Net Result still means monthly swings are larger than the average loss itself — no month looks like the next.</p>
+    </div>
+
+    <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245.</p>
+  `;
+}
+
+function renderGroup12(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · XII</span>
+      <h1>Red Flag / Forensic Scan</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
+    </div>
+
+    <div class="section-title">Transaction Size Outliers (Z-score)</div>
+    <div class="tablewrap"><table>
+      <tr><th>Threshold</th><th>Count</th><th>% of All Entries</th></tr>
+      <tr><td>Beyond 10&sigma; (&gt;8.2M)</td><td>508</td><td>0.09%</td></tr>
+      <tr><td>Beyond 20&sigma; (&gt;16.4M)</td><td>268</td><td>0.05%</td></tr>
+      <tr class="fy-row"><td>Largest single transaction</td><td>91,003,749</td><td>z &asymp; 110.8&sigma;</td></tr>
+    </table></div>
+    <div class="callout warn">
+      <span class="tag">Finding</span>
+      <p>The "wrong topup" reversal found in Group I is confirmed as an extreme statistical outlier — over 110 standard deviations from the mean, by far the largest single entry in the entire ledger.</p>
+    </div>
+
+    <div class="section-title">Dormant-Period Detection</div>
+    <p style="font-size:14px; color:#DCE3EC;">Only 6 months show near-zero activity (&lt;100K net result): Feb, Mar, Apr, Jul, Aug, Sep 2024 — all clustered in the early ramp-up period. No dormant gaps appear after Sep 2024, consistent with the structural break finding in Group XI.</p>
+
+    <div class="section-title">Duplicate Table Reconciliation</div>
+    <p style="font-size:14px; color:#DCE3EC;">(Restated from Group I) Original journal has 590,575 entries vs. 575,986 in <span class="mono">_Duplicate</span> — a gap of 14,589 entries. Both independently balance to zero, so it's not corruption, but confirms <span class="mono">_Duplicate</span> is a stale snapshot, not a live mirror.</p>
+
+    <div class="section-title">Round-Number Bias Check</div>
+    <div class="tablewrap"><table>
+      <tr><th>Threshold</th><th>Count</th><th>% of Large Transactions (&ge;100K)</th></tr>
+      <tr><td>Round to nearest 100,000</td><td>8,358 of 46,540</td><td><b>18.0%</b></td></tr>
+      <tr><td>Round to nearest 1,000,000</td><td>1,440 of 46,540</td><td>3.1%</td></tr>
+    </table></div>
+    <div class="callout">
+      <span class="tag">Finding</span>
+      <p>18% of large transactions are round to the nearest 100K — elevated, but not necessarily alarming on its own. Intercompany transfers, advances, and investment injections (common here per Group VIII) are naturally round-numbered. The large round intercompany draws (68.76M/20M/20M pattern) explain a good chunk of this rather than pointing to fabricated estimates.</p>
+    </div>
+
+    <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245.</p>
+  `;
+}
+
+function renderGroup9(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · IX</span>
+      <h1>Tax Analysis</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
+    </div>
+
+    <div class="callout warn">
+      <span class="tag">Finding — no tax provision ever booked</span>
+      <p>There is no "Provision for Income Tax" line anywhere in AASL's P&L GL chart — only "Advances Income Tax" exists, a prepaid/advance account, not an actual tax expense. AASL has never booked a formal income tax provision against its P&L, despite accumulating ~8.5M BDT in advance tax payments by early 2026. This is a genuine compliance gap, not a data limitation.</p>
+    </div>
+
+    <div class="section-title">VAT/SD Trend</div>
+    <p style="font-size:14px; color:#DCE3EC;">"Payable against Source VAT & Tax" only appears from Dec 2025 onward, running steady at ~95,000/month — consistent and unremarkable once it starts. Its complete absence before Dec 2025, despite real ticketing activity since 2024, suggests VAT withholding wasn't being tracked/booked properly in earlier periods.</p>
+
+    <div class="section-title">Provisioning Gaps</div>
+    <div class="callout warn">
+      <span class="tag">Confirmed</span>
+      <p>No catch-up entry exists reconciling the ~8.5M of accumulated advance tax against an actual tax charge. Either a deferred compliance issue or incomplete year-end closing procedures.</p>
+    </div>
+
+    <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245.</p>
+  `;
+}
+
+function renderGroup10(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · X</span>
+      <h1>Quality of Earnings</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY2026</div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Accruals Ratio</div><div class="value">~59.8%</div></div>
+      <div class="kpi"><div class="label">Related-Party % of Total Expense</div><div class="value">2.8%</div></div>
+      <div class="kpi"><div class="label">Depreciation Rate Data Quality</div><div class="value">Flagged</div></div>
+    </div>
+    <div class="callout warn">
+      <span class="tag">Accruals ratio — provisional</span>
+      <p>(Net Income − CFO) / Total Assets = (-249,292,490 − (-357,795,182)) / 181,522,101 ≈ 59.8%, using verified Cash (55.7M) + Receivable (115.8M) + Fixed Assets (10.0M) as the best-available Total Assets proxy. This inherits the unresolved 329M CFO reconciliation gap from Group II — treat the direction (very high accruals) as more reliable than the precise number.</p>
+    </div>
+
+    <div class="section-title">Non-Recurring Item Scan — the ৳91M anomaly, fully traced</div>
+    <div class="tablewrap"><table>
+      <tr><th>Date</th><th>Amount</th><th>GL</th><th>Narration</th></tr>
+      <tr><td>2025-09-02</td><td class="pos">91,003,749</td><td>Cash at Bank</td><td>Customer bank receive... topup: The City Bank PLC</td></tr>
+      <tr><td>2025-09-02</td><td class="pos">91,003,749</td><td>Trade Receivable</td><td>Debit Entry: Balance-Deduction, Topup, Noor Aviation, "wrong top up"</td></tr>
+      <tr><td>2025-09-02</td><td class="neg">(91,003,749)</td><td>Trade Receivable</td><td>Customer bank receive... topup: The City Bank PLC</td></tr>
+      <tr><td>2025-09-02</td><td class="neg">(91,003,749)</td><td>Sales (Local)</td><td>Debit Entry: Balance-Deduction, Topup, Noor Aviation, "wrong top up"</td></tr>
+    </table></div>
+    <div class="callout ok">
+      <span class="tag">Finding — confirmed genuine, not fabricated</span>
+      <p>This was a real bank deposit that got misapplied and reversed — a genuine one-off correction, not fabricated revenue.</p>
+    </div>
+
+    <div class="tablewrap"><table>
+      <tr><th>Date</th><th>Amount</th><th>GL</th><th>Narration</th></tr>
+      <tr><td>2026-03-29 (&times;2, duplicated)</td><td class="neg">(81,937,315)</td><td>Inter Company Balance</td><td>"Intercompany Balance transferred to ARL from all SBU"</td></tr>
+    </table></div>
+    <div class="callout ok">
+      <span class="tag">Finding — partially resolves Group VIII disclosure gap</span>
+      <p>The counterparty is ARL (Akij Resources Ltd), and "from all SBU" indicates a group-wide treasury cash-pooling sweep, not an opaque bilateral related-party loan. This is a materially better governance picture than the NULL-partner finding alone suggested.</p>
+    </div>
+
+    <div class="callout ok">
+      <span class="tag">Corroborating finding</span>
+      <p>A ৳65.1M payment to IATA BSP (Billing and Settlement Plan) surfaced — strong evidence AASL is a genuine, IATA-accredited travel agent settling real airline ticket sales, reinforcing the business-model finding from Group III.</p>
+    </div>
+
+    <div class="section-title">Related-Party Share of Total</div>
+    <p style="font-size:14px; color:#DCE3EC;">Intercompany interest expense is only 2.8% of Total Expense — modest on the P&L side. The related-party exposure is much more a balance-sheet/funding-side story (~54% of new funding, Group V) than an earnings-manipulation story.</p>
+
+    <div class="section-title">Depreciation Policy Consistency</div>
+    <div class="callout warn">
+      <span class="tag">Data quality flag, not a policy change</span>
+      <p>111 of 116 assets have a depreciation rate of 0% in numDepRate, despite AASL genuinely posting ~1.35M in depreciation expense. This looks like the rate field isn't being maintained/populated consistently, rather than deliberate rate manipulation — but it means depreciation policy consistency cannot be validated from this field at all.</p>
+    </div>
+
+    <div class="section-title">Reconciliation Check</div>
+    <p style="font-size:14px; color:#DCE3EC;">(Restated) Original journal 590,575 entries vs. <span class="mono">_Duplicate</span> 575,986 — both balance to zero independently, gap is a stale snapshot, not corruption.</p>
+
+    <p class="footnote">Source: fin.tblAccountingJournal + ast.tblAsset, iBOSDDD, BU-245.</p>
+  `;
+}
+
+function toggleSidebar(){
+  const app = document.getElementById('app');
+  app.classList.toggle('collapsed');
+  const btn = document.getElementById('toggleBtn');
+  btn.innerHTML = app.classList.contains('collapsed') ? '&#8594;' : '&#8592;';
+}
+
+function renderGroup0(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Master List · All Segments</span>
+      <h1>Anomaly Register</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · Compiled across Groups I–XII</div>
+    </div>
+
+    <div class="callout warn">
+      <span class="tag">Lead finding — structural, unresolved</span>
+      <p>AASL's real ticketing operations post billions of BDT through a separate Adjustment Journal mechanism (Oct 2025: 61,768 entries / ৳2.48B; Jan 2026: 110,158 entries / ৳5.4B — more value than the entire FY2026 "Total Expense" figure reported in Group I). The full Income Statement (Groups I–XII) was built from the main journal only. This may mean the financial picture built so far is structurally incomplete. Recommended next step before treating any prior group's numbers as final.</p>
+    </div>
+
+    <div class="section-title">1. Structural / Data-Completeness</div>
+    <div class="tablewrap"><table>
+      <tr><th>Anomaly</th><th>Group</th></tr>
+      <tr><td>Adjustment Journal carries billions in real transaction volume separate from the main journal</td><td>New</td></tr>
+      <tr><td>Only 21 of AASL's active GL accounts mapped in FS-component config — 93-99% of period value unclassified early on</td><td>I</td></tr>
+      <tr><td>_Duplicate journal table is a stale snapshot (14,589 fewer entries), not a live mirror</td><td>I / XII</td></tr>
+      <tr><td>Depreciation rate field is 0% on 111 of 116 assets despite real depreciation being posted</td><td>III / X</td></tr>
+    </table></div>
+
+    <div class="section-title">2. Revenue / Classification</div>
+    <div class="tablewrap"><table>
+      <tr><th>Anomaly</th><th>Group</th></tr>
+      <tr><td>"Sales (Local)" GL mixes genuine service revenue with wallet top-ups, withdrawals, refunds</td><td>I</td></tr>
+      <tr><td>~90% of FY2026 P&amp;L activity sits in an "(Unassigned)" cost-center bucket; the tagged "B2B" segment is actually profitable (+33.1M)</td><td>III</td></tr>
+    </table></div>
+
+    <div class="section-title">3. Statistical Outliers</div>
+    <div class="tablewrap"><table>
+      <tr><th>Anomaly</th><th>Group</th></tr>
+      <tr><td>508 transactions beyond 10&sigma;; 268 beyond 20&sigma;</td><td>XII</td></tr>
+      <tr><td>Single largest entry ৳91,003,749 (z≈110.8σ) — traced &amp; confirmed as a real bank deposit misapplied then reversed</td><td>X / XII</td></tr>
+      <tr><td>One ৳81,937,315 intercompany entry posted twice on the same date (2026-03-29) — unexplained duplicate posting</td><td>X</td></tr>
+      <tr><td>18.0% of large transactions (≥100K) round to the nearest 100,000</td><td>XII</td></tr>
+    </table></div>
+
+    <div class="section-title">4. Bank &amp; Cash</div>
+    <div class="tablewrap"><table>
+      <tr><th>Anomaly</th><th>Group</th></tr>
+      <tr><td>94.7% of AASL's real cash sits in a bank account legally titled "Akij Logistics Ltd.", not AASL</td><td>IV</td></tr>
+      <tr><td>The two accounts actually named "Akij Air Service Ltd" hold near-zero and went dormant mid-2026</td><td>IV</td></tr>
+      <tr><td>GL-derived cumulative "Cash at Bank" (-402M) contradicts the real reconciled bank balance (+55.7M)</td><td>II / IV</td></tr>
+    </table></div>
+
+    <div class="section-title">5. Related-Party / Governance</div>
+    <div class="tablewrap"><table>
+      <tr><th>Anomaly</th><th>Group</th></tr>
+      <tr><td>Intercompany borrowing jumped from ~0 to ৳68.76M in a single month (Jan 2026)</td><td>V</td></tr>
+      <tr><td>strPartnerName is NULL on all 467 "Investment Partner" entries (partially resolved — one entry's narration names ARL)</td><td>VIII / X</td></tr>
+      <tr><td>April 2026 audit log spike: 11,285 entries vs. 500-1,000 baseline — 82% "Manual Reconcile" activity, timed with major cash swings</td><td>VIII</td></tr>
+    </table></div>
+
+    <div class="section-title">6. Tax / Compliance</div>
+    <div class="tablewrap"><table>
+      <tr><th>Anomaly</th><th>Group</th></tr>
+      <tr><td>No "Provision for Income Tax" ever booked against the P&amp;L despite ~8.5M in accumulated advance tax</td><td>IX</td></tr>
+      <tr><td>"Payable against Source VAT &amp; Tax" only begins Dec 2025, despite real activity since 2024</td><td>IX</td></tr>
+    </table></div>
+
+    <div class="section-title">7. Vendor Concentration</div>
+    <div class="tablewrap"><table>
+      <tr><th>Anomaly</th><th>Group</th></tr>
+      <tr><td>Top 5 vendors = 61.7% of all recorded bills; top 15 = 90.1%</td><td>VII</td></tr>
+      <tr><td>Several top "vendors" are themselves competing travel agencies, not typical suppliers</td><td>VII</td></tr>
+    </table></div>
+
+    <div class="callout">
+      <span class="tag">Coverage note</span>
+      <p>This register reflects everything surfaced across the completed Finance segment (Groups I–XII) plus the Adjustment Journal discovery. ~28 finance-adjacent tables have not yet had a dedicated anomaly pass (Fund Transfer Ledger, Payment Request, Supplier Advance, Bill Attachment, Expense Register Header, and others). Flagging this so the list above is understood as thorough-but-not-exhaustive.</p>
+    </div>
+
+    <p class="footnote">Source: compiled from fin.tblAccountingJournal, fin.tblAdjustmentJournalHeader, fin.tblBankAccountStatement, fin.tblBillRegister, ast.tblAsset, dco.tblAuditLog, dco.tblTwoFactorApproval — iBOSDDD, BU-245.</p>
+  `;
+}
+
+function go(id){
+  renderNav(id);
+  if(id===1) renderGroup1();
+  if(id===2) renderGroup2();
+  if(id===3) renderGroup3();
+  if(id===4) renderGroup4();
+  if(id===5) renderGroup5();
+  if(id===6) renderGroup6();
+  if(id===7) renderGroup7();
+  if(id===8) renderGroup8();
+  if(id===9) renderGroup9();
+  if(id===10) renderGroup10();
+  if(id===11) renderGroup11();
+  if(id===12) renderGroup12();
+}
+
+renderNav(1);
+renderGroup1();
+</script>
+</body>
+</html>
