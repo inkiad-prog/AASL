@@ -1117,6 +1117,54 @@ function renderStrategyChart(){
   `;
 }
 
+// Directional 0–10 priority scores — see methodology note in the Attack Plan section.
+const ATTACK_PLAN = [
+  {
+    competitor: 'GoZayaan', priority: 9, vector: 'B2B wholesale — the segment they neglected',
+    weakness: 'Lowest B2B score of the four rivals (2/5). Capital and product focus have gone into the consumer app, EMI/loans, and the migrant remittance business — B2B wholesale ticketing was never built out as a real platform.',
+    attack: 'Go directly after agents who currently have no real B2B option at GoZayaan. Offer a self-serve portal with real-time fares, faster settlement, and better commission than the ad-hoc arrangements GoZayaan agents are stuck with today. This is the single biggest capability gap of any competitor in any segment.',
+    winCondition: 'Win when AASL is the default wholesale fare source for agents who currently route bulk/B2B bookings through GoZayaan\'s consumer-facing tools out of necessity, not preference.'
+  },
+  {
+    competitor: 'Amy (Be Fresh)', priority: 7, vector: 'Holidays/Umrah + Visa turnaround',
+    weakness: 'Weakest of the four on both Holidays (2/5) and Visa (2/5) — no dedicated package product or visa-speed differentiator, despite being the longest-established B2B name in the market.',
+    attack: 'Launch a visibly branded Hajj/Umrah wholesale package and a fast visa-turnaround guarantee aimed squarely at the agents Amy already serves for ticketing but sends elsewhere for tours and visas. Their own registration-gate friction (formal Travel Agency Certificate required) also excludes smaller/informal agents AASL can onboard faster.',
+    winCondition: 'Win when agents start bundling Hajj/Umrah + visa with AASL even while still ticketing through Amy — a wedge, not a full agent switch, as the first step.'
+  },
+  {
+    competitor: 'ShareTrip', priority: 6, vector: 'B2B agent base + Hajj/Umrah specialization',
+    weakness: 'Market leader with the deepest B2B network (8,000+ agents) — not a capability gap, but a loyalty gap. An open multi-agent digital platform has low switching cost; agents follow whoever offers better commission and faster payouts, not brand loyalty. ShareTrip is also a generalist — no dedicated religious-travel specialization.',
+    attack: 'Two-front approach: (1) a direct agent-acquisition offer (commission + settlement speed) aimed at ShareTrip\'s existing 8,000-agent base, who are already comfortable with digital B2B ticketing and cheap to convert; (2) out-specialize them in Hajj/Umrah wholesale, a niche ShareTrip has not built deep expertise in despite its broad holiday-package offering.',
+    winCondition: 'Win by peeling off a measurable slice of ShareTrip\'s agent base in the Hajj/Umrah season first, where AASL\'s existing IATA BSP volume is a credible edge — not by attacking their B2C/Superbrand position, which is not winnable head-on.'
+  },
+  {
+    competitor: 'Triplover', priority: 5, vector: 'Neutral multi-carrier positioning',
+    weakness: 'Owned by US-Bangla Group — structurally captive to one airline\'s inventory and pricing. Agents reselling across multiple carriers have reason to doubt Triplover\'s fares are the best available, not just the best available from its own parent.',
+    attack: 'Market AASL explicitly as the neutral wholesale option — "not owned by any single airline" — to agents who need honest multi-carrier fare comparison rather than a single group\'s inventory. This is a trust/positioning attack, not a capability one.',
+    winCondition: 'Win when multi-carrier agents cite neutrality as the reason they route bookings through AASL instead of Triplover, especially for routes/carriers outside US-Bangla\'s own network.'
+  },
+];
+
+function renderAttackChart(){
+  const w = 720, barH = 22, gap = 10, padL = 8, padR = 60, padT = 10, labelH = 16;
+  const maxScore = 10;
+  const rows = ATTACK_PLAN.slice().sort((a,b)=>b.priority-a.priority);
+  const rowUnit = barH + labelH + gap;
+  const h = padT*2 + rows.length*rowUnit;
+  const maxW = w - padL - padR;
+  const bars = rows.map((r,i)=>{
+    const y = padT + i*rowUnit;
+    const bw = Math.max((r.priority/maxScore)*maxW, 4);
+    return `
+      <text x="${padL}" y="${y+labelH-4}" font-size="12" fill="#F4F2ED" font-weight="bold">${r.competitor}</text>
+      <text x="${padL+130}" y="${y+labelH-4}" font-size="11" fill="#8FA1B8">${r.vector}</text>
+      <rect x="${padL}" y="${y+labelH}" width="${bw}" height="${barH}" rx="4" fill="${STRAT_ACCENT}" opacity="${0.55 + 0.45*(r.priority/maxScore)}"/>
+      <text x="${padL+bw+8}" y="${y+labelH+barH/2+4}" font-size="12" fill="#DCE3EC" font-weight="bold">${r.priority}/10</text>
+    `;
+  }).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}">${bars}</svg>`;
+}
+
 function renderGroup13(){
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
@@ -1178,6 +1226,32 @@ function renderGroup13(){
       <p>AASL already runs a large agent balance/wallet mechanism through its ledger — in some months (Group I) this "wallet mechanic" flow is larger than clean revenue itself, but today it shows up as a data-quality problem (the Group I revenue-contamination finding), not a monetized product. GoZayaan turned the same kind of mechanism into travel loans, 0% EMI, and a market-leading remittance app; Amy built "Amy Credit Limit" for its agents.</p>
     </div>
     <p style="font-size:14px; color:#DCE3EC; line-height:1.6;"><b>Recommended moves:</b> Formalize the existing wallet/balance activity into an actual agent-credit or EMI product (following GoZayaan's and Amy's playbook) — this turns an existing accounting headache into a monetizable line (transaction fees, float income, EMI interest) instead of noise to filter out of every financial report.</p>
+
+    <div class="section-title">Competitive Attack Plan</div>
+    <div class="section-sub">Where to attack each competitor first, ranked by opportunity — not a generic SWOT</div>
+    <div class="callout">
+      <span class="tag">Methodology</span>
+      <p>Priority scores (0–10) are a directional judgment call combining (a) how weak the competitor's own research-derived score is in the attacked segment, and (b) how large and reachable that competitor's agent/customer base is. They are a planning tool for sequencing, not a guarantee — validate with real agent conversations before committing budget.</p>
+    </div>
+    <div class="chartwrap">${renderAttackChart()}</div>
+
+    ${ATTACK_PLAN.map(r=>`
+      <div class="section-title" style="margin-top:28px;">Attack: ${r.competitor} — ${r.vector}</div>
+      <div class="callout warn">
+        <span class="tag">Their vulnerability</span>
+        <p>${r.weakness}</p>
+      </div>
+      <div class="callout ok">
+        <span class="tag">Our move</span>
+        <p>${r.attack}</p>
+      </div>
+      <p style="font-size:13.5px; color:#8FA1B8; line-height:1.6;"><b>What winning looks like:</b> ${r.winCondition}</p>
+    `).join('')}
+
+    <div class="callout">
+      <span class="tag">Sequencing</span>
+      <p>Run these in priority order, not all at once: GoZayaan's B2B gap first (highest capability advantage, lowest resistance), then Amy's Holidays/Visa gap (low resistance, builds the Hajj/Umrah specialization needed for the ShareTrip play), then the ShareTrip agent-acquisition push (needs the Hajj/Umrah credibility built in step 2), then the Triplover neutrality positioning (a longer-term trust play that compounds once AASL has visible multi-carrier volume to point to).</p>
+    </div>
 
     <p class="footnote">
       Sources: ShareTrip — <a href="https://futurestartup.com/2022/08/24/sharetrip-turns-three-sharetrips-evolution-and-whats-next-for-the-travel-tech-startup/" style="color:#8FA1B8;">Future Startup</a>, <a href="https://www.thedailystar.net/supplements/smart-bangladesh-inclusive-tomorrow/news/sharetrip-and-the-rise-smart-travelling-bangladesh-3158466" style="color:#8FA1B8;">The Daily Star</a>, <a href="https://b2b.sharetrip.net/" style="color:#8FA1B8;">ShareTrip B2B</a>.
