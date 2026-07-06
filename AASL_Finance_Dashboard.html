@@ -137,10 +137,9 @@
       <div class="sub mono">AKIJ AIR SERVICE LTD · BU-245</div>
       <div class="sub mono" id="liveStatus" style="margin-top:6px; color:#B8933F;">Connecting to database…</div>
     </div>
-    <div class="segment-label">Segment 1 — Finance</div>
     <div id="nav"></div>
-    <div class="segment-label" style="margin-top:18px; opacity:.4;">Segment 2 — Assets (locked)</div>
-    <div class="segment-label" style="opacity:.4;">Segment 3 — Partners (locked)</div>
+    <div class="segment-label" style="margin-top:18px; opacity:.4;">Segment 3 — Assets (locked)</div>
+    <div class="segment-label" style="opacity:.4;">Segment 4 — Partners (locked)</div>
   </div>
   <div class="main"><div class="main-inner" id="main"></div></div>
 </div>
@@ -148,18 +147,19 @@
 <script>
 const romans = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII"];
 const groups = [
-  {id:1, roman:"I", title:"Income Statement — Trend & Structure", status:"done"},
-  {id:2, roman:"II", title:"Balance Sheet & Cash Flow (derived)", status:"done"},
-  {id:3, roman:"III", title:"Profitability Analysis", status:"done"},
-  {id:4, roman:"IV", title:"Liquidity Analysis", status:"done"},
-  {id:5, roman:"V", title:"Leverage & Solvency", status:"done"},
-  {id:6, roman:"VI", title:"Efficiency Analysis", status:"done"},
-  {id:7, roman:"VII", title:"Cost Structure & Drivers", status:"done"},
-  {id:8, roman:"VIII", title:"Related-Party / Governance", status:"done"},
-  {id:9, roman:"IX", title:"Tax Analysis", status:"done"},
-  {id:10, roman:"X", title:"Quality of Earnings", status:"done"},
-  {id:11, roman:"XI", title:"Trend & Time-Series Diagnostics", status:"done"},
-  {id:12, roman:"XII", title:"Red Flag / Forensic Scan", status:"done"},
+  {id:1, roman:"I", title:"Income Statement — Trend & Structure", status:"done", segment:"Segment 1 — Finance"},
+  {id:2, roman:"II", title:"Balance Sheet & Cash Flow (derived)", status:"done", segment:"Segment 1 — Finance"},
+  {id:3, roman:"III", title:"Profitability Analysis", status:"done", segment:"Segment 1 — Finance"},
+  {id:4, roman:"IV", title:"Liquidity Analysis", status:"done", segment:"Segment 1 — Finance"},
+  {id:5, roman:"V", title:"Leverage & Solvency", status:"done", segment:"Segment 1 — Finance"},
+  {id:6, roman:"VI", title:"Efficiency Analysis", status:"done", segment:"Segment 1 — Finance"},
+  {id:7, roman:"VII", title:"Cost Structure & Drivers", status:"done", segment:"Segment 1 — Finance"},
+  {id:8, roman:"VIII", title:"Related-Party / Governance", status:"done", segment:"Segment 1 — Finance"},
+  {id:9, roman:"IX", title:"Tax Analysis", status:"done", segment:"Segment 1 — Finance"},
+  {id:10, roman:"X", title:"Quality of Earnings", status:"done", segment:"Segment 1 — Finance"},
+  {id:11, roman:"XI", title:"Trend & Time-Series Diagnostics", status:"done", segment:"Segment 1 — Finance"},
+  {id:12, roman:"XII", title:"Red Flag / Forensic Scan", status:"done", segment:"Segment 1 — Finance"},
+  {id:13, roman:"XIII", title:"Competitive Landscape & Segment Strategy", status:"done", segment:"Segment 2 — Growth Strategy"},
 ];
 
 const FALLBACK_MONTHLY = [{"period": "2024-02", "clean_revenue": 14536, "wallet_mechanic": 33989.0, "total_expense": 0, "other_income": 0, "net_result": 14536, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-03", "clean_revenue": -23320.0, "wallet_mechanic": 0, "total_expense": 0, "other_income": 0, "net_result": -23320.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-04", "clean_revenue": -38443.0, "wallet_mechanic": 1098709.0, "total_expense": 0, "other_income": 0, "net_result": -38443.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-05", "clean_revenue": 100582, "wallet_mechanic": 249002.0, "total_expense": 0, "other_income": 0, "net_result": 100582, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-06", "clean_revenue": -101622.0, "wallet_mechanic": 166539, "total_expense": 0, "other_income": 0, "net_result": -101622.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-07", "clean_revenue": 23160.0, "wallet_mechanic": 366259, "total_expense": 0, "other_income": 0, "net_result": 23160.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-08", "clean_revenue": -3598.0, "wallet_mechanic": 28080, "total_expense": 0, "other_income": 0, "net_result": -3598.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-09", "clean_revenue": -78301.0, "wallet_mechanic": 273570.0, "total_expense": 0, "other_income": 0, "net_result": -78301.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-10", "clean_revenue": -353823.0, "wallet_mechanic": 662828, "total_expense": 86686.0, "other_income": 0, "net_result": -440509.0, "selling": 86686.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-11", "clean_revenue": -2689961.0, "wallet_mechanic": 1059687.0, "total_expense": 1038652.0, "other_income": 0, "net_result": -3728613.0, "selling": 1038652.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-12", "clean_revenue": -573190.0, "wallet_mechanic": 625923.0, "total_expense": 511368.0, "other_income": 0, "net_result": -1084558.0, "selling": 511368.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-01", "clean_revenue": 2755100.0, "wallet_mechanic": 6139568.0, "total_expense": 1069910.0, "other_income": 0, "net_result": 1685190.0, "selling": 1069910.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-02", "clean_revenue": -3219579.0, "wallet_mechanic": 7295740.0, "total_expense": 1867862.0, "other_income": 0, "net_result": -5087441.0, "selling": 1867862.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-03", "clean_revenue": -1515845.0, "wallet_mechanic": 5222496.0, "total_expense": 2903809.0, "other_income": 0, "net_result": -4419655.0, "selling": 2903809.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-04", "clean_revenue": -2801543.0, "wallet_mechanic": 5294111.0, "total_expense": 2982196.0, "other_income": 0, "net_result": -5783739.0, "selling": 2982196.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-05", "clean_revenue": 9684900.0, "wallet_mechanic": 7572531.0, "total_expense": 5301018.0, "other_income": 0, "net_result": 4383881.0, "selling": 5301018.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-06", "clean_revenue": 7174672.0, "wallet_mechanic": 13664718.0, "total_expense": 8918856.0, "other_income": 0, "net_result": -1744184.0, "selling": 8918856.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-07", "clean_revenue": 12641567.0, "wallet_mechanic": 18285502.0, "total_expense": 26131283.0, "other_income": 0, "net_result": -13489716.0, "selling": 26131283.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-08", "clean_revenue": 8914317.0, "wallet_mechanic": 43203159.0, "total_expense": 20161573.0, "other_income": 0, "net_result": -11247256.0, "selling": 20161573.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-09", "clean_revenue": -9252874.0, "wallet_mechanic": -49862940.0, "total_expense": 15038673.0, "other_income": 0, "net_result": -24291548.0, "selling": 15026757.0, "admin": 0, "operating": 0, "financial": 11917.0, "depreciation": 0, "marketing": 0}, {"period": "2025-10", "clean_revenue": -12691926.0, "wallet_mechanic": 24712196.0, "total_expense": 13813995.0, "other_income": 0, "net_result": -26505921.0, "selling": 13801681.0, "admin": 0, "operating": 0, "financial": 12314.0, "depreciation": 0, "marketing": 0}, {"period": "2025-11", "clean_revenue": -18231059.0, "wallet_mechanic": 32611029.0, "total_expense": 13469507.0, "other_income": 0, "net_result": -31700566.0, "selling": 13457590.0, "admin": 0, "operating": 0, "financial": 11917.0, "depreciation": 0, "marketing": 0}, {"period": "2025-12", "clean_revenue": -28687953.0, "wallet_mechanic": 18856165.0, "total_expense": 16556492.0, "other_income": 0, "net_result": -45244445.0, "selling": 15186524.0, "admin": 520340.0, "operating": 0, "financial": 849629.0, "depreciation": 0, "marketing": 0}, {"period": "2026-01", "clean_revenue": 13081468.0, "wallet_mechanic": -12212825.0, "total_expense": 7319210.0, "other_income": 0, "net_result": 5762257.0, "selling": 3009026.0, "admin": 1352962.0, "operating": 2342788.0, "financial": 402314.0, "depreciation": 212121.0, "marketing": 0}, {"period": "2026-02", "clean_revenue": -7049571.0, "wallet_mechanic": -17186271.0, "total_expense": 13265496.0, "other_income": 402580.0, "net_result": -19912488.0, "selling": 1936954.0, "admin": 3238291.0, "operating": 7115811.0, "financial": 762318.0, "depreciation": 212121.0, "marketing": 0}, {"period": "2026-03", "clean_revenue": -6754738.0, "wallet_mechanic": 6456577.0, "total_expense": 14073728.0, "other_income": 27494.0, "net_result": -20800972.0, "selling": 2917948.0, "admin": 3208148.0, "operating": 6803451.0, "financial": 909332.0, "depreciation": 234849.0, "marketing": 0}, {"period": "2026-04", "clean_revenue": -6974080.0, "wallet_mechanic": -8397862.0, "total_expense": 12611471.0, "other_income": 472736.0, "net_result": -19112816.0, "selling": 1894912.0, "admin": 1557801.0, "operating": 7045952.0, "financial": 1885533.0, "depreciation": 227273.0, "marketing": 0}, {"period": "2026-05", "clean_revenue": -4378517.0, "wallet_mechanic": -15727942.0, "total_expense": 14954472.0, "other_income": 1975617.0, "net_result": -17357371.0, "selling": 5004132.0, "admin": 3318447.0, "operating": 5381017.0, "financial": 1016028.0, "depreciation": 234849.0, "marketing": 0}, {"period": "2026-06", "clean_revenue": -3970616.0, "wallet_mechanic": -5961248.0, "total_expense": 21982923.0, "other_income": 561891.0, "net_result": -25391648.0, "selling": 4892640.0, "admin": 1604061.0, "operating": 14123205.0, "financial": 1084679.0, "depreciation": 227273.0, "marketing": 51066.0}, {"period": "2026-07", "clean_revenue": -701561.0, "wallet_mechanic": -5732174, "total_expense": 7578521.0, "other_income": 149.0, "net_result": -8279933.0, "selling": 4309841.0, "admin": 386562.0, "operating": 1475229.0, "financial": 185188.0, "depreciation": 37879.0, "marketing": 1183821.0}];
@@ -289,10 +289,16 @@ function cls(n){ return n<0 ? 'neg' : (n>0?'pos':''); }
 
 function renderNav(activeId){
   const nav = document.getElementById('nav');
+  let lastSegment = null;
   nav.innerHTML = groups.map(g=>{
+    let prefix = '';
+    if(g.segment !== lastSegment){
+      prefix = `<div class="segment-label" style="${lastSegment?'margin-top:18px;':''}">${g.segment}</div>`;
+      lastSegment = g.segment;
+    }
     const disabled = g.status==='pending' ? 'disabled' : '';
     const active = g.id===activeId ? 'active' : '';
-    return `<div class="navitem ${active} ${disabled}" onclick="${g.status==='done'?`go(${g.id})`:''}">
+    return `${prefix}<div class="navitem ${active} ${disabled}" onclick="${g.status==='done'?`go(${g.id})`:''}">
       <span class="num">${g.roman}</span>
       <span>${g.title}${g.status==='pending'?' — pending':''}</span>
     </div>`;
@@ -523,12 +529,12 @@ function renderGroup2(){
 
     <div class="callout">
       <span class="tag">Free Cash Flow — blocked</span>
-      <p>FCF = CFO − CapEx cannot be computed yet. CapEx requires Asset Additions data, deferred to Segment 2 (Assets). Only one loose "Building &amp; Construction" entry (৳4.7M) exists in the finance ledger and is not a reliable CapEx figure on its own.</p>
+      <p>FCF = CFO − CapEx cannot be computed yet. CapEx requires Asset Additions data, deferred to Segment 3 (Assets). Only one loose "Building &amp; Construction" entry (৳4.7M) exists in the finance ledger and is not a reliable CapEx figure on its own.</p>
     </div>
 
     <div class="callout">
       <span class="tag">Cash conversion — verdict pending</span>
-      <p>With a 329M reconciliation gap, no trustworthy verdict on "does profit convert to cash" can be given yet. Requires Group V (Inter Company) and Segment 2 (Assets) data first.</p>
+      <p>With a 329M reconciliation gap, no trustworthy verdict on "does profit convert to cash" can be given yet. Requires Group V (Inter Company) and Segment 3 (Assets) data first.</p>
     </div>
 
     <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245. Cumulative balances computed as running sum of numAmount per GL account from first ledger entry (Feb 2022) through Jul 2026.</p>
@@ -1056,6 +1062,134 @@ function renderGroup10(){
   `;
 }
 
+const STRATEGY_SEGMENTS = [
+  {key:'b2b', label:'B2B — Agent Network'},
+  {key:'b2c', label:'B2C — Consumer App'},
+  {key:'holidays', label:'Holidays & Umrah'},
+  {key:'visa', label:'Visa Services'},
+  {key:'wallet', label:'Wallet / Fintech'},
+];
+// Directional 0–5 scores from public sources (see footnote) — not verified market-share data.
+const STRATEGY_SCORES = {
+  AASL:      {b2b:4, b2c:1, holidays:3, visa:2, wallet:2},
+  ShareTrip: {b2b:5, b2c:5, holidays:4, visa:3, wallet:3},
+  GoZayaan:  {b2b:2, b2c:5, holidays:4, visa:2, wallet:5},
+  Amy:       {b2b:4, b2c:3, holidays:2, visa:2, wallet:3},
+  Triplover: {b2b:4, b2c:3, holidays:4, visa:3, wallet:2},
+};
+const STRAT_ACCENT = '#B8933F';
+const STRAT_MUTED = '#4A7FB5';
+
+function renderStrategyPanel(segLabel, scores){
+  const w = 360, barH = 18, gap = 8, padL = 92, padR = 34, padT = 6;
+  const maxW = w - padL - padR;
+  const rows = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  const h = padT*2 + rows.length*(barH+gap) - gap;
+  const bars = rows.map(([name,score],i)=>{
+    const y = padT + i*(barH+gap);
+    const bw = Math.max((score/5)*maxW, 3);
+    const isAASL = name==='AASL';
+    const color = isAASL ? STRAT_ACCENT : STRAT_MUTED;
+    return `
+      <text x="${padL-10}" y="${y+barH/2+4}" text-anchor="end" font-size="11" fill="${isAASL?'#F4F2ED':'#8FA1B8'}" font-weight="${isAASL?'bold':'normal'}">${name}</text>
+      <rect x="${padL}" y="${y}" width="${bw}" height="${barH}" rx="4" fill="${color}" opacity="${isAASL?1:0.8}"/>
+      <text x="${padL+bw+8}" y="${y+barH/2+4}" font-size="11" fill="#8FA1B8">${score}/5</text>
+    `;
+  }).join('');
+  return `<div style="flex:1 1 300px; min-width:280px;">
+    <div style="font-family:'Courier New',monospace; font-size:11px; letter-spacing:1px; color:#B8933F; text-transform:uppercase; margin-bottom:8px;">${segLabel}</div>
+    <svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}">${bars}</svg>
+  </div>`;
+}
+
+function renderStrategyChart(){
+  const panels = STRATEGY_SEGMENTS.map(seg=>{
+    const scores = {};
+    Object.keys(STRATEGY_SCORES).forEach(company=>{ scores[company] = STRATEGY_SCORES[company][seg.key]; });
+    return renderStrategyPanel(seg.label, scores);
+  }).join('');
+  return `
+    <div style="display:flex; align-items:center; gap:20px; margin-bottom:16px; font-size:12px; color:#DCE3EC; flex-wrap:wrap;">
+      <span style="display:flex; align-items:center; gap:6px;"><span style="width:12px;height:12px;border-radius:3px;background:${STRAT_ACCENT};display:inline-block;"></span> AASL (subject of this analysis)</span>
+      <span style="display:flex; align-items:center; gap:6px;"><span style="width:12px;height:12px;border-radius:3px;background:${STRAT_MUTED};display:inline-block;opacity:.8;"></span> Competitors — ShareTrip, GoZayaan, Amy, Triplover</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:28px 32px;">${panels}</div>
+  `;
+}
+
+function renderGroup13(){
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Growth Strategy · XIII</span>
+      <h1>Competitive Landscape &amp; Segment Strategy</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) vs. ShareTrip, GoZayaan, Amy, Triplover</div>
+    </div>
+
+    <div class="callout">
+      <span class="tag">Methodology</span>
+      <p>Scores below (0–5 per segment) are a directional read from public sources — company websites, press coverage, funding/traffic trackers — not verified market-share or revenue data by segment (none of these companies disclose that). Use this to spot where AASL is structurally behind or ahead, not as a precise scoreboard. Full source list at the bottom of this page.</p>
+    </div>
+
+    <div class="section-title">Competitive Strength by Segment</div>
+    <div class="section-sub">AASL (gold) vs. the four competitors (blue), ranked within each segment</div>
+    <div class="chartwrap">${renderStrategyChart()}</div>
+
+    <div class="section-title">Competitor Snapshots</div>
+    <div class="tablewrap"><table>
+      <tr><th>Company</th><th>Backing</th><th>Core Strength</th><th>Notable Move</th></tr>
+      <tr><td>ShareTrip</td><td>Independent, self-funded growth</td><td>Market leader, B2C2B hybrid</td><td>8,000+ offline agents onboarded to a digital B2B portal; bank partnerships (BRAC, Meghna Bank) lifted sales 15–18%; first Bangladeshi travel brand named Superbrand 2025–26</td></tr>
+      <tr><td>GoZayaan</td><td>$8.1M raised (Wavemaker, Nordstar, BRAC Osiris)</td><td>Funded consumer app, fintech add-ons</td><td>Travel loans + 0% EMI; pivoted into migrant-worker remittance, now the largest such app in the region; acquired a Pakistani OTA for regional expansion</td></tr>
+      <tr><td>Amy (Be Fresh)</td><td>Independent, IATA/ATAB/TOAB-recognized</td><td>Early mover (since 2015), airline-endorsed B2B</td><td>Formal agency-certificate gate on B2B onboarding; proprietary "Amy Credit Limit" for agents</td></tr>
+      <tr><td>Triplover</td><td>US-Bangla Group (airline-owned)</td><td>Airline-backed vertical integration</td><td>Direct pipe into an airline's own inventory/network; bundles holidays, visa assistance, and B2B under one group</td></tr>
+      <tr><td><b>AASL</b></td><td>Akij Group (conglomerate-owned)</td><td>Profitable B2B/wholesale ticketing, real Hajj/Umrah volume</td><td>Live data shows B2B is AASL's only clearly profitable segment (+33.1M FY2026); B2C, Holidays, and Visa are largely unbuilt as distinct products today</td></tr>
+    </table></div>
+
+    <div class="section-title">Segment Strategy: B2B — Agent Network</div>
+    <div class="callout ok">
+      <span class="tag">Where AASL stands</span>
+      <p>This is AASL's proven segment — live ledger data (Group III) shows the B2B-tagged segment net +33.1M while the rest of the book is unprofitable. The gap is infrastructure: ShareTrip, Amy, and BDFare/IV Trip-style platforms run self-serve digital B2B portals with real-time fares and online agent credit; AASL's own data shows most activity still sits in an "(Unassigned)" bucket, suggesting manual/legacy processing rather than a proper platform.</p>
+    </div>
+    <p style="font-size:14px; color:#DCE3EC; line-height:1.6;"><b>Recommended moves:</b> (1) Build or license a self-serve B2B portal — real-time GDS/NDC fares, online credit-limit management, agent self-onboarding — matching what ShareTrip and dedicated B2B vendors (BDFare, IV Trip, goFLY) already offer. (2) Use Akij Group's own retail/distribution footprint to recruit a captive agent base that independent OTAs can't easily reach. (3) Fix the segment-tagging gap first (Group III finding) — you can't defend a segment you can't measure.</p>
+
+    <div class="section-title">Segment Strategy: B2C — Consumer App</div>
+    <div class="callout warn">
+      <span class="tag">Where AASL stands</span>
+      <p>Effectively unbuilt — live data shows a token +424K net result, versus GoZayaan's ~500K–1M monthly users and ShareTrip's Superbrand-status consumer app. Both competitors have multi-million-dollar funding and years of app/marketing investment behind their B2C position; going head-to-head for open-market consumer acquisition is a expensive fight AASL is not positioned to win.</p>
+    </div>
+    <p style="font-size:14px; color:#DCE3EC; line-height:1.6;"><b>Recommended moves:</b> Don't compete for open-market B2C spend. Instead run a <b>closed/affinity B2C play</b> — travel booking benefits for Akij Group's own employee base and its FMCG/retail customer network, distributed through channels competitors don't have access to, rather than paid consumer acquisition.</p>
+
+    <div class="section-title">Segment Strategy: Holidays &amp; Umrah</div>
+    <div class="callout ok">
+      <span class="tag">Where AASL stands</span>
+      <p>General holiday packages are contested ground — GoZayaan (≈700K hotel inventory), Triplover, and ShareTrip (plus a medical-tourism partnership) all compete there directly. But AASL's own ledger shows real, recurring Hajj/Umrah and group-tour activity (IATA BSP settlements, wholesale group bookings) — a narrower, less-contested niche versus dedicated Hajj/Umrah specialists (Jetway, As-Sunnah) and the generalist OTAs alike.</p>
+    </div>
+    <p style="font-size:14px; color:#DCE3EC; line-height:1.6;"><b>Recommended moves:</b> Don't try to out-market ShareTrip/GoZayaan on general holiday packages. Specialize in Hajj/Umrah and religious/group tourism as a wholesale supplier behind dedicated pilgrimage agencies, where AASL already has real transaction volume and less crowded competition.</p>
+
+    <div class="section-title">Segment Strategy: Visa Services</div>
+    <div class="callout">
+      <span class="tag">Where AASL stands</span>
+      <p>Every competitor researched (ShareTrip, GoZayaan, Amy, Triplover) offers visa assistance — but as a bundled add-on to ticket/tour sales, not a standalone growth engine or a stated differentiator for any of them.</p>
+    </div>
+    <p style="font-size:14px; color:#DCE3EC; line-height:1.6;"><b>Recommended moves:</b> Treat visa as an attach-rate service bundled with ticketing and Hajj/Umrah packages, not a segment to invest in growing independently. If a differentiator is wanted, compete on turnaround time and reliability — no competitor is winning specifically on visa, so the bar to be "the reliable option" is low.</p>
+
+    <div class="section-title">Segment Strategy: Wallet / Fintech</div>
+    <div class="callout warn">
+      <span class="tag">Where AASL stands</span>
+      <p>AASL already runs a large agent balance/wallet mechanism through its ledger — in some months (Group I) this "wallet mechanic" flow is larger than clean revenue itself, but today it shows up as a data-quality problem (the Group I revenue-contamination finding), not a monetized product. GoZayaan turned the same kind of mechanism into travel loans, 0% EMI, and a market-leading remittance app; Amy built "Amy Credit Limit" for its agents.</p>
+    </div>
+    <p style="font-size:14px; color:#DCE3EC; line-height:1.6;"><b>Recommended moves:</b> Formalize the existing wallet/balance activity into an actual agent-credit or EMI product (following GoZayaan's and Amy's playbook) — this turns an existing accounting headache into a monetizable line (transaction fees, float income, EMI interest) instead of noise to filter out of every financial report.</p>
+
+    <p class="footnote">
+      Sources: ShareTrip — <a href="https://futurestartup.com/2022/08/24/sharetrip-turns-three-sharetrips-evolution-and-whats-next-for-the-travel-tech-startup/" style="color:#8FA1B8;">Future Startup</a>, <a href="https://www.thedailystar.net/supplements/smart-bangladesh-inclusive-tomorrow/news/sharetrip-and-the-rise-smart-travelling-bangladesh-3158466" style="color:#8FA1B8;">The Daily Star</a>, <a href="https://b2b.sharetrip.net/" style="color:#8FA1B8;">ShareTrip B2B</a>.
+      GoZayaan — <a href="https://www.tbsnews.net/economy/corporates/digital-tourism-bangladesh-story-gozayaan-551918" style="color:#8FA1B8;">The Business Standard</a>, <a href="https://sturgeoncapital.substack.com/p/building-bangladeshs-largest-online" style="color:#8FA1B8;">Sturgeon Capital</a>, <a href="https://tracxn.com/d/companies/go-zayaan/__rDyJWSSOk-aZXfZ1jVcdbSSopEmb5s61zt5ZNX4ABg4" style="color:#8FA1B8;">Tracxn</a>.
+      Amy — <a href="https://www.amybd.com/" style="color:#8FA1B8;">amybd.com</a>, <a href="https://b2bmap.com/amy-online-travel-agent" style="color:#8FA1B8;">B2B Map</a>.
+      Triplover — <a href="https://www.dhakatribune.com/business/323867/triplover-redefining-travel-solutions-as-premier" style="color:#8FA1B8;">Dhaka Tribune</a>, <a href="https://triplover.com/about" style="color:#8FA1B8;">triplover.com</a>.
+      Market context — <a href="https://www.now.com.bd.luxury/booming-ota-in-bangladesh/" style="color:#8FA1B8;">NOW Business Magazine</a>, <a href="https://www.similarweb.com/website/sharetrip.net/vs/gozayaan.com/" style="color:#8FA1B8;">Similarweb traffic comparison</a>.
+      AASL figures from Groups I &amp; III (fin.tblAccountingJournal, iBOSDDD, BU-245), live where available.
+    </p>
+  `;
+}
+
 function toggleSidebar(){
   const app = document.getElementById('app');
   app.classList.toggle('collapsed');
@@ -1155,6 +1289,7 @@ function go(id){
   if(id===10) renderGroup10();
   if(id===11) renderGroup11();
   if(id===12) renderGroup12();
+  if(id===13) renderGroup13();
 }
 
 renderNav(1);
