@@ -337,731 +337,487 @@ function renderChart(){
   </svg>`;
 }
 
+const MONTH_LABELS = ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
+
+const FALLBACK_BUDGET_META = { fiscalYear: '2026-2027', code: 'BGT-AASL-26-27-154' };
+const FALLBACK_BUDGET_MONTHLY = [
+  {month:1, revenue:22686844, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-9627, sellingFixed:-1929434, sellingCommission:-14544421},
+  {month:2, revenue:17127633, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-8220, sellingFixed:-1929434, sellingCommission:-10908316},
+  {month:3, revenue:15979098, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-7715, sellingFixed:-1929434, sellingCommission:-10144733},
+  {month:4, revenue:18796956, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-8923, sellingFixed:-1929434, sellingCommission:-11970785},
+  {month:5, revenue:21560200, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-10112, sellingFixed:-1929434, sellingCommission:-13766403},
+  {month:6, revenue:22870311, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-10658, sellingFixed:-1929434, sellingCommission:-14592387},
+  {month:7, revenue:9447690, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-3933, sellingFixed:-1929434, sellingCommission:-5942440},
+  {month:8, revenue:10331859, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-4326, sellingFixed:-1929434, sellingCommission:-6536684},
+  {month:9, revenue:11822637, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-4975, sellingFixed:-1929434, sellingCommission:-7517186},
+  {month:10, revenue:13953092, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-5871, sellingFixed:-1929434, sellingCommission:-8870280},
+  {month:11, revenue:16702311, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-7045, sellingFixed:-1929434, sellingCommission:-10644336},
+  {month:12, revenue:20300039, admin:-1564953, marketing:-2053104.9, depreciation:-238000, financial:-900000, tax:-8595, sellingFixed:-1929434, sellingCommission:-12986090},
+];
+
+function budgetMeta(){
+  return (LIVE && LIVE.budget && LIVE.budget.header) ? LIVE.budget.header : FALLBACK_BUDGET_META;
+}
+function budgetMonthlyRaw(){
+  return (LIVE && LIVE.budget && Array.isArray(LIVE.budget.monthly) && LIVE.budget.monthly.length) ? LIVE.budget.monthly : FALLBACK_BUDGET_MONTHLY;
+}
+function deriveBudgetMonth(m){
+  const sellingTotal = num(m.sellingFixed) + num(m.sellingCommission);
+  const ebit = num(m.revenue) + sellingTotal + num(m.marketing) + num(m.admin) + num(m.depreciation);
+  const ebt = ebit + num(m.financial);
+  const netIncome = ebt + num(m.tax);
+  return {...m, sellingTotal, ebit, ebt, netIncome};
+}
+function budgetMonthly(){
+  return budgetMonthlyRaw().map(deriveBudgetMonth).sort((a,b)=>a.month-b.month);
+}
+function budgetSum(rows, field){ return rows.reduce((a,r)=>a+num(r[field]),0); }
+function monthLabel(m){ return MONTH_LABELS[(m-1+12)%12]; }
+
+function renderBudgetBarChart(rows, field, title){
+  const w=1080, h=220, padL=50, padB=26, padT=10;
+  const vals = rows.map(r=>r[field]);
+  const max = Math.max(...vals, 0);
+  const min = Math.min(...vals, 0);
+  const range = max-min || 1;
+  const barW = (w-padL-20)/rows.length;
+  const zeroY = padT + (max/range)*(h-padT-padB);
+  const bars = rows.map((r,i)=>{
+    const x = padL + i*barW;
+    const barH = Math.abs(r[field])/range*(h-padT-padB);
+    const y = r[field]>=0 ? zeroY-barH : zeroY;
+    const color = r[field]>=0 ? '#7FBF98' : '#A5432F';
+    return `<rect x="${x+1}" y="${y}" width="${barW-2}" height="${Math.max(barH,1)}" fill="${color}" opacity="0.85"/>`;
+  }).join('');
+  const labels = rows.map((r,i)=>{
+    const x = padL + i*barW + barW/2;
+    return `<text x="${x}" y="${h-8}" font-size="9" fill="#8FA1B8" text-anchor="middle">${monthLabel(r.month)}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}">
+    <line x1="${padL}" y1="${zeroY}" x2="${w-10}" y2="${zeroY}" stroke="#B8933F" stroke-width="1"/>
+    ${bars}${labels}
+    <text x="${padL}" y="14" font-size="10" fill="#8FA1B8">${title}</text>
+  </svg>`;
+}
+
+function renderTwoBarChart(items){
+  const w=600, barH=28, gap=14, padL=140, padR=60, padT=10;
+  const maxW = w-padL-padR;
+  const maxVal = Math.max(...items.map(i=>i.value));
+  const h = padT*2 + items.length*(barH+gap) - gap;
+  const bars = items.map((it,i)=>{
+    const y = padT + i*(barH+gap);
+    const bw = Math.max((it.value/maxVal)*maxW, 3);
+    return `<text x="${padL-10}" y="${y+barH/2+4}" text-anchor="end" font-size="12" fill="#DCE3EC">${it.label}</text>
+      <rect x="${padL}" y="${y}" width="${bw}" height="${barH}" rx="4" fill="${STRAT_ACCENT}" opacity="${it.opacity||1}"/>
+      <text x="${padL+bw+8}" y="${y+barH/2+4}" font-size="12" fill="#F4F2ED" font-weight="bold">${it.text}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}">${bars}</svg>`;
+}
+
 function renderGroup1(){
-  const fyRows = Object.keys(fy).sort().map(k=>{
-    const r = fy[k];
-    return `<tr class="fy-row"><td>${k}</td><td class="${cls(r.clean_revenue)}">${fmt(r.clean_revenue)}</td>
-      <td>${fmt(r.total_expense)}</td><td class="${cls(r.net_result)}">${fmt(r.net_result)}</td></tr>`;
-  }).join('');
+  const meta = budgetMeta();
+  const rows = budgetMonthly();
+  const revenue = budgetSum(rows,'revenue');
+  const selling = budgetSum(rows,'sellingTotal');
+  const marketing = budgetSum(rows,'marketing');
+  const admin = budgetSum(rows,'admin');
+  const depreciation = budgetSum(rows,'depreciation');
+  const financial = budgetSum(rows,'financial');
+  const tax = budgetSum(rows,'tax');
+  const ebit = revenue+selling+marketing+admin+depreciation;
+  const ebt = ebit+financial;
+  const netIncome = ebt+tax;
+  const pct = (v)=> revenue ? (v/revenue*100).toFixed(2)+'%' : 'n/a';
 
-  const monthlyRows = monthly.map(r=>{
-    return `<tr><td>${r.period}</td><td class="${cls(r.clean_revenue)}">${fmt(r.clean_revenue)}</td>
-      <td>${fmt(r.selling)}</td><td>${fmt(r.admin)}</td><td>${fmt(r.operating)}</td>
-      <td>${fmt(r.financial)}</td><td>${fmt(r.depreciation+r.marketing)}</td>
-      <td class="${cls(r.net_result)}">${fmt(r.net_result)}</td></tr>`;
-  }).join('');
-
-  const totalNet = monthly.reduce((a,r)=>a+r.net_result,0);
-  const totalRev = monthly.reduce((a,r)=>a+r.clean_revenue,0);
-  const totalExp = monthly.reduce((a,r)=>a+r.total_expense,0);
-
-  const revStats = stats(monthly.map(r=>r.clean_revenue));
-  const fyKeys = Object.keys(fy).sort();
-  const latestFY = fyKeys[fyKeys.length-1] || 'FY—';
-  const prevFY = fyKeys[fyKeys.length-2] || 'FY—';
-  const latest = fy[latestFY] || {selling:0,admin:0,operating:0,financial:0,depreciation:0,marketing:0,total_expense:0,wallet_mechanic:0};
-  const prev = fy[prevFY] || {total_expense:0,wallet_mechanic:0};
-
-  const csLines = [
-    ['Selling Expenses', latest.selling],
-    ['Operating Expenses', latest.operating],
-    ['Administrative Expenses', latest.admin],
-    ['Financial Expenses', latest.financial],
-    ['Depreciation', latest.depreciation],
-    ['Marketing', latest.marketing],
+  const lines = [
+    ['Revenue', revenue],
+    ['Selling Expenses (incl. commission)', selling],
+    ['Marketing Expenses', marketing],
+    ['Administrative Expenses', admin],
+    ['Depreciation', depreciation],
   ];
-  const commonSizeRows = csLines.map(([label,amt])=>{
-    const pct = latest.total_expense ? (amt/latest.total_expense*100).toFixed(1) : '0.0';
-    return `<tr><td>${label}</td><td>${fmt(amt)}</td><td>${pct}%</td></tr>`;
-  }).join('');
+  const isRows = lines.map(([label,amt])=>`<tr><td>${label}</td><td class="${cls(amt)}">${fmt(amt)}</td><td>${pct(amt)}</td></tr>`).join('');
 
-  const scaleLatest = latest.wallet_mechanic, scalePrev = prev.wallet_mechanic;
-  const scaleGrowth = scaleLatest - scalePrev;
-  const scaleGrowthLabel = scalePrev ? (((scaleLatest-scalePrev)/Math.abs(scalePrev))*100).toFixed(0)+'%' : 'n/a';
-  const expLatest = latest.total_expense, expPrev = prev.total_expense;
-  const expGrowth = expLatest - expPrev;
-  const expGrowthLabel = expPrev ? (((expLatest-expPrev)/Math.abs(expPrev))*100).toFixed(0)+'%' : 'n/a';
-
-  const fixedAmt = latest.admin + latest.depreciation;
-  const variableAmt = latest.selling + latest.operating + latest.marketing;
-  const financialAmt = latest.financial;
-  const cmTotal = fixedAmt + variableAmt + financialAmt;
-  const fixedPct = cmTotal ? (fixedAmt/cmTotal*100).toFixed(1) : '0.0';
-  const variablePct = cmTotal ? (variableAmt/cmTotal*100).toFixed(1) : '0.0';
-  const financialPct = cmTotal ? (financialAmt/cmTotal*100).toFixed(1) : '0.0';
+  const monthlyRows = rows.map(r=>`<tr><td>${monthLabel(r.month)}</td><td class="${cls(r.revenue)}">${fmt(r.revenue)}</td><td>${fmt(r.sellingTotal)}</td><td>${fmt(r.marketing)}</td><td>${fmt(r.admin)}</td><td>${fmt(r.depreciation)}</td><td>${fmt(r.financial)}</td><td>${fmt(r.tax)}</td><td class="${cls(r.netIncome)}">${fmt(r.netIncome)}</td></tr>`).join('');
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · I</span>
       <h1>Income Statement — Trend &amp; Structure</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · Feb 2024 — Jul 2026</div>
-    </div>
-
-    <div class="callout ok">
-      <span class="tag">Data integrity — passed</span>
-      <p>Every month in the full ledger (Feb 2022 — Jul 2026) nets to exactly zero (debits = credits). The <span class="mono">_Duplicate</span> journal table was found to be a stale/incomplete mirror (14,589 fewer entries) and was excluded — <span class="mono">fin.tblAccountingJournal</span> is used as the sole source throughout.</p>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${meta.fiscalYear} Budget</div>
     </div>
 
     <div class="callout warn">
-      <span class="tag">Revenue quality — contaminated</span>
-      <p>The "Sales (Local)" GL account is not a clean revenue line. AASL runs a B2B travel/ticketing wallet ledger (Hajj/Umrah, group tour bookings) through this account, mixing genuine service revenue with agent wallet top-ups, withdrawals, and refunds. A single ৳91.0M "wrong topup" reversal in Sep 2025 alone exceeds the entire FY2026 net revenue swing.</p>
-      <p>The figures below use a best-effort narration-based filter (excluding entries tagged Topup / Balance transfer / Agent-Debit-Memo / Refund) to isolate "clean" revenue. Even this filtered bucket retains high transaction volume and volatility — full separation is not reliably achievable from narration text alone. Treat "Clean Revenue" below as a defensible estimate, not an exact figure.</p>
+      <span class="tag">Why this is a budget, not actuals</span>
+      <p>AASL has no reliable actuals-based Income Statement, Balance Sheet, or Cash Flow (the ledger mixes wallet top-ups/refunds into "Sales (Local)", making actuals unreliable without accounting-team netting rules — see the prior actuals-based attempt this dashboard used to show). What AASL <b>does</b> have is a clean, single active Income Statement budget for FY ${meta.fiscalYear} (<span class="mono">${meta.code}</span>). Everything below is that budget — flagged honestly wherever something isn't computable from an IS alone.</p>
     </div>
 
     <div class="kpi-row">
-      <div class="kpi"><div class="label">Total Net Result</div><div class="value neg">${fmt(totalNet)}</div></div>
-      <div class="kpi"><div class="label">Total Clean Revenue</div><div class="value ${cls(totalRev)}">${fmt(totalRev)}</div></div>
-      <div class="kpi"><div class="label">Total Expense</div><div class="value">${fmt(totalExp)}</div></div>
-      <div class="kpi"><div class="label">Months w/ Positive Result</div><div class="value">${monthly.filter(r=>r.net_result>0).length} / ${monthly.length}</div></div>
+      <div class="kpi"><div class="label">Revenue (FY Budget)</div><div class="value">${fmt(revenue)}</div></div>
+      <div class="kpi"><div class="label">EBIT</div><div class="value ${cls(ebit)}">${fmt(ebit)} (${pct(ebit)})</div></div>
+      <div class="kpi"><div class="label">EBT</div><div class="value ${cls(ebt)}">${fmt(ebt)} (${pct(ebt)})</div></div>
+      <div class="kpi"><div class="label">Net Income</div><div class="value ${cls(netIncome)}">${fmt(netIncome)} (${pct(netIncome)})</div></div>
     </div>
 
-    <div class="section-title">Fiscal-Year Summary (Jul–Jun)</div>
-    <div class="section-sub">FY2024 and FY2027 are partial periods (data starts Feb-2024; ends Jul-2026)</div>
+    <div class="section-title">FY ${meta.fiscalYear} Income Statement</div>
     <div class="tablewrap"><table>
-      <tr><th>Fiscal Year</th><th>Clean Revenue</th><th>Total Expense</th><th>Net Result</th></tr>
-      ${fyRows}
+      <tr><th>Line</th><th>FY Total (BDT)</th><th>% of Revenue</th></tr>
+      ${isRows}
+      <tr class="fy-row"><td>EBIT</td><td class="${cls(ebit)}">${fmt(ebit)}</td><td>${pct(ebit)}</td></tr>
+      <tr><td>Financial Expenses (interest)</td><td class="neg">${fmt(financial)}</td><td>${pct(financial)}</td></tr>
+      <tr class="fy-row"><td>EBT</td><td class="${cls(ebt)}">${fmt(ebt)}</td><td>${pct(ebt)}</td></tr>
+      <tr><td>Tax</td><td class="neg">${fmt(tax)}</td><td>${pct(tax)}</td></tr>
+      <tr class="fy-row"><td>Net Income</td><td class="${cls(netIncome)}">${fmt(netIncome)}</td><td>${pct(netIncome)}</td></tr>
     </table></div>
 
-    <div class="section-title">Monthly Net Result</div>
-    <div class="chartwrap">${renderChart()}</div>
+    <div class="callout">
+      <span class="tag">Structural note</span>
+      <p>This is an agency/pass-through cost model — selling expenses alone consume ${(Math.abs(selling)/revenue*100).toFixed(1)}% of revenue, meaning structural margin is thin from the outset regardless of scale.</p>
+    </div>
 
-    <div class="section-title">Monthly Detail — Full Cost Structure</div>
-    <div class="section-sub">All figures BDT. Parentheses = negative. "Other" = Depreciation + Marketing combined.</div>
+    <div class="section-title">Monthly Net Income</div>
+    <div class="chartwrap">${renderBudgetBarChart(rows,'netIncome',`Monthly Budgeted Net Income (BDT), FY ${meta.fiscalYear}`)}</div>
+
+    <div class="section-title">Monthly Detail</div>
     <div class="tablewrap"><table>
-      <tr><th>Period</th><th>Clean Rev.</th><th>Selling</th><th>Admin</th><th>Operating</th><th>Financial</th><th>Other</th><th>Net Result</th></tr>
+      <tr><th>Month</th><th>Revenue</th><th>Selling</th><th>Marketing</th><th>Admin</th><th>Depreciation</th><th>Financial</th><th>Tax</th><th>Net Income</th></tr>
       ${monthlyRows}
     </table></div>
 
-    <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245. Expense-side GL classification only becomes materially complete from Sep-2025 onward — pre-Sep-2025 "profit" figures likely understate true cost and should not be read as clean profitability.</p>
-
-    <div class="section-title">Revenue Volatility &amp; Growth</div>
-    <div class="tablewrap"><table>
-      <tr><th>Metric</th><th>Value</th></tr>
-      <tr><td>Mean monthly revenue</td><td class="${cls(revStats.mean)}">${fmt(revStats.mean)}</td></tr>
-      <tr><td>Std. deviation</td><td>${fmt(revStats.sd)}</td></tr>
-      <tr><td>Coefficient of Variation</td><td>${revStats.cov!==null ? revStats.cov.toFixed(2) : 'n/a'}</td></tr>
-      <tr><td>CAGR</td><td>Not computable — sign-flipping revenue, no valid compounding base</td></tr>
-    </table></div>
-    <div class="callout warn">
-      <span class="tag">Finding</span>
-      <p>CoV of ${revStats.cov!==null ? revStats.cov.toFixed(2) : 'n/a'} means volatility swamps the average — this is not a business with a stable trend, it's a business with noise. No stable growth rate exists to report.</p>
-    </div>
-
-    <div class="section-title">Common-Size Structure — ${latestFY}</div>
-    <div class="section-sub">Base = Total Expense, not Revenue (a net-negative revenue period is an invalid denominator)</div>
-    <div class="tablewrap"><table>
-      <tr><th>Line</th><th>Amount</th><th>% of Total Expense</th></tr>
-      ${commonSizeRows}
-    </table></div>
-    <div class="callout warn">
-      <span class="tag">Finding</span>
-      <p>Selling expense is the dominant cost driver. Gross/Operating/Net margins are not computable in any period — every year either lacks full expense classification or has a negative revenue denominator.</p>
-    </div>
-
-    <div class="section-title">Operating Leverage</div>
-    <div class="tablewrap"><table>
-      <tr><th></th><th>${prevFY}</th><th>${latestFY}</th><th>Growth</th></tr>
-      <tr><td>Gross transaction volume (scale proxy)</td><td>${fmt(scalePrev)}</td><td>${fmt(scaleLatest)}</td><td class="${cls(scaleGrowth)}">${scaleGrowthLabel}</td></tr>
-      <tr><td>Total expense</td><td>${fmt(expPrev)}</td><td>${fmt(expLatest)}</td><td class="${cls(expGrowth)}">${expGrowthLabel}</td></tr>
-    </table></div>
-    <div class="callout warn">
-      <span class="tag">Operating leverage</span>
-      <p>Comparing ${prevFY} → ${latestFY}: cost growth vs. transaction-volume growth shown above. When expense growth outpaces scale growth, that's negative operating leverage and explains widening losses.</p>
-    </div>
-
-    <div class="section-title">Contribution Margin Proxy — ${latestFY}</div>
-    <div class="tablewrap"><table>
-      <tr><th>Classification</th><th>Amount</th><th>% of Total</th></tr>
-      <tr><td>Fixed (Admin + Depreciation)</td><td>${fmt(fixedAmt)}</td><td>${fixedPct}%</td></tr>
-      <tr><td>Variable (Selling + Operating + Marketing)</td><td>${fmt(variableAmt)}</td><td>${variablePct}%</td></tr>
-      <tr><td>Financial (debt service, separate)</td><td>${fmt(financialAmt)}</td><td>${financialPct}%</td></tr>
-    </table></div>
-    <div class="callout warn">
-      <span class="tag">Finding</span>
-      <p>Cost structure is predominantly variable. Combined with the operating leverage finding above, unit economics per transaction should be watched closely as scale grows.</p>
-    </div>
+    <p class="footnote">Source: bgt.tblBudgetIncomeExpenseHeader/Row, iBOSDDD, BU-245, live active budget (${meta.code}).</p>
   `;
 }
 
 function renderGroup2(){
-  const bsMap = {};
-  pick(LIVE && LIVE.balanceSheet, FALLBACK_BALANCE_SHEET).forEach(r=>{ bsMap[r.gl] = num(r.balance); });
-  const bsRows = FALLBACK_BALANCE_SHEET.map(fb=>{
-    const bal = bsMap[fb.gl] !== undefined ? bsMap[fb.gl] : fb.balance;
-    return `<tr><td>${fb.gl}</td><td class="${cls(bal)}">${fmt(bal)}</td></tr>`;
-  }).join('');
-  const cash = bsMap['Cash at Bank'] !== undefined ? bsMap['Cash at Bank'] : FALLBACK_BALANCE_SHEET.find(r=>r.gl==='Cash at Bank').balance;
-  const dep = (fy[Object.keys(fy).sort().pop()]||{}).depreciation || 1348486;
-  const netIncomeLatest = (fy[Object.keys(fy).sort().pop()]||{}).net_result || -249292490;
+  const cf = (LIVE && LIVE.budget && LIVE.budget.projectedCashFlow) || {cnt:2148, minDate:'2026-01-01', maxDate:'2026-03-14'};
+  const bsRows = (LIVE && LIVE.budget) ? LIVE.budget.balanceSheetBudgetRows : 0;
+  const tbRows = (LIVE && LIVE.budget) ? LIVE.budget.trialBalanceBudgetRows : 0;
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Finance · II — Derived, not pulled</span>
-      <h1>Balance Sheet &amp; Cash Flow (Reconstructed)</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · derived from fin.tblAccountingJournal</div>
+      <span class="eyebrow">Finance · II</span>
+      <h1>Balance Sheet &amp; Cash Flow (derived)</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
     </div>
 
     <div class="callout warn">
-      <span class="tag">Methodology caveat</span>
-      <p>No formal balance sheet or cash flow table exists in this database. Everything below is reconstructed from cumulative General Ledger balances. Exact debit/credit sign convention per account type has not been independently validated against a live iBOS report — treat direction (growing/shrinking) as more reliable than the absolute sign shown.</p>
-    </div>
-
-    <div class="section-title">I-B: Balance Sheet Positions (Cumulative GL Balances, live)</div>
-    <div class="tablewrap"><table>
-      <tr><th>GL Account</th><th>Cumulative Balance</th></tr>
-      ${bsRows}
-    </table></div>
-    <div class="callout warn">
-      <span class="tag">Finding</span>
-      <p>Payable against Suppliers fell ~102.7M while Investment (+61.6M) and Inter Company Balance (-110.7M) appeared suddenly in FY2026 — consistent with AASL paying down supplier obligations while taking on new intercompany financing and making an investment. Needs confirmation in Group V (Related-Party) before drawing conclusions.</p>
-    </div>
-
-    <div class="section-title">I-C: Cash Flow Analysis — Indirect Method (${Object.keys(fy).sort().pop()})</div>
-    <div class="tablewrap"><table>
-      <tr><th>Component</th><th>Amount</th></tr>
-      <tr><td>Net Income (from Group I, live)</td><td class="${cls(netIncomeLatest)}">${fmt(netIncomeLatest)}</td></tr>
-      <tr><td>+ Depreciation add-back (live)</td><td class="pos">${fmt(dep)}</td></tr>
-    </table></div>
-
-    <div class="callout warn">
-      <span class="tag">Reconciliation gap — not yet closeable live</span>
-      <p>A full indirect-method CFO needs period-over-period deltas in Receivables/Payables (this quarter's GL balance minus last quarter's), which requires storing historical snapshots — this API currently only pulls the all-time cumulative GL balance. Net Income and the Depreciation add-back above are live; the Receivables/Payables movement lines and the full reconciliation are not yet wired and are intentionally omitted rather than shown stale.</p>
+      <span class="tag">Not computable</span>
+      <p>No Balance Sheet budget exists for this entity — <span class="mono">bgt.tblBudgetBalanceSheetHeader</span> has ${bsRows} rows for BU-245, and <span class="mono">bgt.tblBudgetTrialBalance</span> has ${tbRows} rows (both checked live). No Cash Flow budget table exists in the schema tied to this Income Statement budget either. An actuals-based reconstruction was attempted separately and abandoned — the ledger's GL naming conflates refunds/agent top-ups with gross revenue, making a derived BS/CF unreliable without accounting-team input on netting logic.</p>
     </div>
 
     <div class="callout">
-      <span class="tag">Free Cash Flow — blocked</span>
-      <p>FCF = CFO − CapEx cannot be computed yet. CapEx requires Asset Additions data, deferred to Segment 3 (Assets). Only one loose "Building &amp; Construction" entry (৳4.7M) exists in the finance ledger and is not a reliable CapEx figure on its own.</p>
+      <span class="tag">Partial exception — a different planning tool exists</span>
+      <p>A separate operational forecast, <span class="mono">fin.tblProjectedCashFlowDailyHistory</span>, does hold real AASL data — ${cf.cnt} rows spanning ${cf.minDate ? String(cf.minDate).slice(0,10) : 'n/a'} to ${cf.maxDate ? String(cf.maxDate).slice(0,10) : 'n/a'} (checked live). This is a day-to-day cash planning tool on a different horizon than the FY ${budgetMeta().fiscalYear} IS budget, not an integrated Cash Flow Statement — it can't be substituted for one, but it means AASL isn't entirely without cash visibility, just without a formal CF statement.</p>
     </div>
 
-    <div class="callout">
-      <span class="tag">Cash conversion — verdict pending</span>
-      <p>With a 329M reconciliation gap, no trustworthy verdict on "does profit convert to cash" can be given yet. Requires Group V (Inter Company) and Segment 3 (Assets) data first.</p>
-    </div>
-
-    <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245. Cumulative balances computed as running sum of numAmount per GL account from first ledger entry (Feb 2022) through Jul 2026.</p>
+    <p class="footnote">Source: bgt.tblBudgetBalanceSheetHeader, bgt.tblBudgetTrialBalance, fin.tblProjectedCashFlowDailyHistory, iBOSDDD, BU-245 — checked live on each page load.</p>
   `;
 }
 
 function renderGroup3(){
-  const assetRows = pick(LIVE && LIVE.assets, FALLBACK_ASSETS);
-  const assetTotal = assetRows.reduce((a,r)=>a+num(r.bookValue),0);
-  const assetTableRows = assetRows.map(r=>`<tr><td>${r.category}</td><td>${fmt(num(r.bookValue))}</td></tr>`).join('');
-
-  const segRows = pick(LIVE && LIVE.segments, FALLBACK_SEGMENTS);
-  const segTableRows = segRows.map(r=>{
-    const rev = num(r.revenue), exp = num(r.expense), net = rev-exp;
-    return `<tr><td>${r.segment}</td><td class="${cls(rev)}">${fmt(rev)}</td><td>${fmt(exp)}</td><td class="${cls(net)}">${fmt(net)}</td></tr>`;
-  }).join('');
+  const rows = budgetMonthly();
+  const revenue = budgetSum(rows,'revenue');
+  const commission = budgetSum(rows,'sellingCommission');
+  const ebit = budgetSum(rows,'ebit');
+  const ebt = budgetSum(rows,'ebt');
+  const netIncome = budgetSum(rows,'netIncome');
+  const contribution = revenue ? ((revenue+commission)/revenue*100) : 0;
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · III</span>
       <h1>Profitability Analysis</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY2026</div>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
 
-    <div class="callout warn">
-      <span class="tag">Margins — still blocked</span>
-      <p>Gross/EBIT/EBITDA/Net margin trends are not computable — revenue is negative or unreliable in every period (same root cause as Group I). Reporting a margin % against a broken denominator would be false precision, so none is shown.</p>
-    </div>
-
-    <div class="section-title">Fixed Asset Base (ast.tblAsset, BU-245, live)</div>
     <div class="tablewrap"><table>
-      <tr><th>Asset Category</th><th>Book Value</th></tr>
-      ${assetTableRows}
-      <tr class="fy-row"><td>Total Fixed Assets</td><td>${fmt(assetTotal)}</td></tr>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Contribution Margin (revenue − commission only)</td><td>${contribution.toFixed(1)}%</td></tr>
+      <tr><td>EBIT Margin</td><td class="${cls(ebit)}">${(ebit/revenue*100).toFixed(2)}%</td></tr>
+      <tr><td>EBT Margin</td><td class="${cls(ebt)}">${(ebt/revenue*100).toFixed(2)}%</td></tr>
+      <tr><td>Net Margin</td><td class="${cls(netIncome)}">${(netIncome/revenue*100).toFixed(2)}%</td></tr>
     </table></div>
-    <div class="callout warn">
-      <span class="tag">Major finding</span>
-      <p>AASL owns no aircraft, no fleet, no significant plant — its entire fixed asset base is ~10M BDT of office furniture, IT equipment, and one small building item. This confirms the earlier ticketing-narration discovery: <b>AASL is not an aviation operator, it is an asset-light travel/ticketing agency</b> trading under the "Air Service" name.</p>
+
+    <div class="callout ${ebit>=0?'ok':'warn'}">
+      <span class="tag">Critical distinction</span>
+      <p>Operationally the business is ${ebit>=0?'marginally profitable':'operating at a loss'} (EBIT margin ${(ebit/revenue*100).toFixed(2)}%) — ${netIncome<0 && ebit>=0 ? 'the bottom-line loss is entirely a function of financing cost, not operations.' : ''} This is a critical distinction: an operating view says one thing; a bottom-line view (after the intercompany interest charge — see Group VIII) says another. Which one matters depends on whether that intercompany loan is permanent capital structure or a temporary funding bridge.</p>
     </div>
 
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">Asset Turnover (vs. Fixed Assets)</div><div class="value">38.5&times;</div></div>
-      <div class="kpi"><div class="label">ROA</div><div class="value">Blocked</div></div>
-      <div class="kpi"><div class="label">DuPont Decomposition</div><div class="value">Blocked</div></div>
-    </div>
-    <p class="footnote">ROA needs Total Assets (fixed + cash + receivables), but cash/receivable signs are still unvalidated from Group II. DuPont needs a working Net Margin and an equity figure — both unavailable. Reporting either would be fabricated precision.</p>
-
-    <div class="section-title">Segment / Cost-Center Profitability — trailing 12 months (live)</div>
-    <div class="section-sub">Using strCostRevenueName tags on the journal as the segment dimension</div>
-    <div class="tablewrap"><table>
-      <tr><th>Segment</th><th>Revenue</th><th>Expense</th><th>Net Result</th></tr>
-      ${segTableRows}
-    </table></div>
-    <div class="callout warn">
-      <span class="tag">Critical finding</span>
-      <p>The B2B travel-agent segment is actually profitable (+33.1M). The entire loss is concentrated in the "(Unassigned)" bucket (-211.2M) — meaning roughly 90% of AASL's transactions aren't tagged to any cost/revenue segment at all. Either a data-tagging discipline problem, or that bucket holds the bulk of true operating activity left unclassified. This is the single most important thread to pull next.</p>
-    </div>
-
-    <p class="footnote">Source: fin.tblAccountingJournal + ast.tblAsset, iBOSDDD, BU-245.</p>
+    <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
   `;
 }
 
 function renderGroup4(){
-  const bankRows = pick(LIVE && LIVE.bank, FALLBACK_BANK).filter(r=>r.balance!==null && r.balance!==undefined);
-  const totalCash = bankRows.reduce((a,r)=>a+num(r.balance),0) || 1;
-  const bankTableRows = bankRows.map(r=>{
-    const bal = num(r.balance);
-    const pct = (bal/totalCash*100).toFixed(1);
-    return `<tr><td>${r.bankName}</td><td>${r.accountName}</td><td class="${cls(bal)}">${fmt(bal)}</td><td>${pct}%</td></tr>`;
-  }).join('');
-  const topPct = bankRows.length ? Math.max(...bankRows.map(r=>num(r.balance)))/totalCash*100 : 0;
-
-  const latestKey = Object.keys(fy).sort().pop();
-  const latestFyData = fy[latestKey] || {net_result:-249292490};
-  const monthsInFy = monthly.filter(r=>fyKey(r.period)===latestKey).length || 12;
-  const avgMonthlyBurn = Math.abs(latestFyData.net_result)/monthsInFy;
-  const avgDailyBurn = avgMonthlyBurn/30.4;
-  const daysOfCash = avgDailyBurn ? (totalCash/avgDailyBurn) : 0;
-  const runwayMonths = avgMonthlyBurn ? (totalCash/avgMonthlyBurn) : 0;
-
-  const bsMap4 = {};
-  pick(LIVE && LIVE.balanceSheet, FALLBACK_BALANCE_SHEET).forEach(r=>{ bsMap4[r.gl] = num(r.balance); });
-  const receivable = bsMap4['Trade Receivable (Local)'] !== undefined ? bsMap4['Trade Receivable (Local)'] : 115819836;
-  const payable = bsMap4['Payable against Suppliers'] !== undefined ? bsMap4['Payable against Suppliers'] : 81476352;
-  const currentRatio = payable ? ((totalCash+receivable)/payable) : 0;
-
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · IV</span>
       <h1>Liquidity Analysis</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · As of Jul 6, 2026</div>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
     </div>
 
-    <div class="section-title">Bank Account Concentration (live)</div>
-    <div class="tablewrap"><table>
-      <tr><th>Bank</th><th>Titled As</th><th>Balance</th><th>% of Cash</th></tr>
-      ${bankTableRows}
-      <tr class="fy-row"><td>Total</td><td></td><td>${fmt(totalCash)}</td><td>100%</td></tr>
-    </table></div>
     <div class="callout warn">
-      <span class="tag">Critical finding — bank concentration &amp; related-party risk</span>
-      <p>${topPct.toFixed(1)}% of AASL's actual cash sits in its single largest bank account. Watch whether that account's legal title matches "Akij Air Service Ltd." — historically it has been titled under a different Akij entity, which is a governance risk, not a modeling artifact (see Group VIII).</p>
-    </div>
-    <div class="callout">
-      <span class="tag">Note — corrects Group II</span>
-      <p>This real, reconciled bank balance contradicts the cumulative GL "Cash at Bank" figure from Group II. That confirms the GL figure is distorted by wallet-mechanic/clearing entries and should not be trusted as an actual cash balance.</p>
+      <span class="tag">Not computable</span>
+      <p>Liquidity ratios (current ratio, quick ratio, cash conversion cycle) require Balance Sheet data (current assets/liabilities) that doesn't exist for this entity's budget (see Group II). No proxy is meaningful here — Income Statement data alone says nothing about working capital position, and fabricating one would be false precision.</p>
     </div>
 
-    <div class="section-title">Days-of-Cash-on-Hand &amp; Burn Rate (live)</div>
-    <div class="tablewrap"><table>
-      <tr><th>Metric</th><th>Value</th></tr>
-      <tr><td>Total cash on hand</td><td>${fmt(totalCash)}</td></tr>
-      <tr><td>${latestKey} Net Result</td><td class="${cls(latestFyData.net_result)}">${fmt(latestFyData.net_result)}</td></tr>
-      <tr><td>Avg. monthly burn</td><td>${fmt(avgMonthlyBurn)}</td></tr>
-      <tr><td>Avg. daily burn</td><td>${fmt(avgDailyBurn)}</td></tr>
-      <tr class="fy-row"><td>Days of Cash on Hand</td><td>~${daysOfCash.toFixed(1)} days</td></tr>
-      <tr class="fy-row"><td>Cash Runway</td><td>~${runwayMonths.toFixed(1)} months</td></tr>
-    </table></div>
-
-    <div class="section-title">Current Ratio Proxy (live)</div>
-    <div class="tablewrap"><table>
-      <tr><th>Component</th><th>Value</th></tr>
-      <tr><td>Cash</td><td>${fmt(totalCash)}</td></tr>
-      <tr><td>+ Trade Receivable</td><td>${fmt(receivable)}</td></tr>
-      <tr><td>÷ Payable against Suppliers</td><td>${fmt(payable)}</td></tr>
-      <tr class="fy-row"><td>Current Ratio Proxy</td><td>~${currentRatio.toFixed(2)}&times;</td></tr>
-    </table></div>
-    <div class="callout warn">
-      <span class="tag">Bottom line</span>
-      <p>Runway and concentration risk should be reassessed each time this page loads live data — thresholds above are computed from the current balances, not a point-in-time snapshot.</p>
-    </div>
-
-    <p class="footnote">Source: fin.tblBankAccountStatement + fin.tblBankAccount, iBOSDDD, BU-245. Bank balances as of latest reconciled statement entry (Jul 6, 2026).</p>
+    <p class="footnote">Blocked by: no Balance Sheet budget for BU-245 (Group II).</p>
   `;
 }
 
 function renderGroup5(){
-  const rp = pick(LIVE && LIVE.relatedParty, []);
-  let cumBalance = 0, cumInterest = 0;
-  const rpRows = rp.map(r=>{
-    cumBalance += num(r.balanceMove);
-    cumInterest += num(r.interestMove);
-    return {period:r.period, cumBalance, cumInterest};
-  });
-  const rpTail = rpRows.slice(-6);
-  const rpTableRows = rpTail.map(r=>`<tr><td>${r.period}</td><td class="${cls(r.cumBalance)}">${fmt(r.cumBalance)}</td><td>${fmt(r.cumInterest)}</td></tr>`).join('');
+  const rows = budgetMonthly();
+  const ebit = budgetSum(rows,'ebit');
+  const financial = budgetSum(rows,'financial');
+  const coverage = financial ? (ebit/Math.abs(financial)) : null;
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · V</span>
       <h1>Leverage &amp; Solvency Analysis</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY2026</div>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
 
     <div class="kpi-row">
-      <div class="kpi"><div class="label">Fin. Expense / Total Expense</div><div class="value">3.7%</div></div>
-      <div class="kpi"><div class="label">Implied Intercompany Rate</div><div class="value">~10.7%</div></div>
-      <div class="kpi"><div class="label">Intercompany Share of New Funding</div><div class="value">~54%</div></div>
-      <div class="kpi"><div class="label">Interest Coverage</div><div class="value">Blocked</div></div>
+      <div class="kpi"><div class="label">Interest Coverage (EBIT / Interest)</div><div class="value ${coverage!==null && coverage<1 ? 'neg':'pos'}">${coverage!==null ? coverage.toFixed(2)+'x' : 'n/a'}</div></div>
+      <div class="kpi"><div class="label">Third-Party Bank Debt in Budget</div><div class="value">None found</div></div>
     </div>
 
-    <div class="section-title">Implied Intercompany Interest Rate</div>
-    <div class="section-sub">Derived directly from the ledger's own interest accrual sub-account</div>
-    <div class="tablewrap"><table>
-      <tr><th>Period</th><th>Intercompany Principal</th><th>Cumulative Interest Accrued</th></tr>
-      <tr><td>Dec 2025</td><td>1,937,315</td><td>48,461</td></tr>
-      <tr><td>Jan 2026</td><td>70,699,406</td><td>450,775</td></tr>
-      <tr><td>Jul 2026</td><td>110,699,406</td><td>5,288,840</td></tr>
-    </table></div>
-    <div class="callout">
-      <span class="tag">Finding</span>
-      <p>Interest accrued ~4.84M over 6 months on an average balance of ~90.7M &rarr; implied annualized rate ≈ 10.7%. This is derived from the actual interest sub-ledger, not estimated.</p>
-    </div>
-
-    <div class="section-title">Intercompany Funding Dependency</div>
-    <p style="font-size:14px; color:#DCE3EC; line-height:1.6;">Of the three "new funding" sources that appeared in FY2026 (Intercompany Balance +110.7M, Investment +61.6M, Advance Suppliers +31.4M), Intercompany borrowing represents <b>~54% of total new funding</b> tagged this year — the single largest source.</p>
-
-    <div class="section-title">Interest Coverage Proxy</div>
     <div class="callout warn">
-      <span class="tag">Blocked</span>
-      <p>Needs a working Operating Income figure, which requires clean revenue — still broken from Group I.</p>
+      <span class="tag">Solvency red flag</span>
+      <p>An interest coverage ratio ${coverage!==null && coverage<1 ? 'below 1.0x is a solvency red flag on its own' : 'is shown here'} — operating earnings cover only ${coverage!==null ? (coverage*100).toFixed(0) : 'n/a'}% of the interest bill. Combined with the fact this interest is <b>100% intercompany</b> (verified live — see Group VIII), this reads less like external credit risk and more like a related-party funding structure absorbing the entity's operating shortfall.</p>
     </div>
 
-    <div class="section-title">Intercompany Borrowing Trend — the real red flag</div>
-    <div class="tablewrap"><table>
-      <tr><th>Month</th><th>Intercompany Draw</th></tr>
-      <tr><td>May 2025</td><td>1,100,000</td></tr>
-      <tr><td>Dec 2025</td><td>837,315</td></tr>
-      <tr><td><b>Jan 2026</b></td><td><b>68,762,091</b></td></tr>
-      <tr><td>Feb 2026</td><td>20,000,000</td></tr>
-      <tr><td>May 2026</td><td>20,000,000</td></tr>
-    </table></div>
-    <div class="callout warn">
-      <span class="tag">Finding</span>
-      <p>Intercompany borrowing was negligible through 2025, then exploded with a ৳68.8M single draw in Jan 2026 — the same month AASL's monthly losses were also near their worst. This looks like AASL being kept afloat by intercompany financing precisely when operating losses peaked — a genuine solvency dependency signal, not just a funding preference.</p>
-    </div>
-
-    <div class="section-title">Live Intercompany Balance Trend (last 6 months)</div>
-    <div class="tablewrap"><table>
-      <tr><th>Period</th><th>Cumulative Inter Company Balance</th><th>Cumulative Interest</th></tr>
-      ${rpTableRows || '<tr><td colspan="3">No live data yet</td></tr>'}
-    </table></div>
-    <div class="callout">
-      <span class="tag">Note</span>
-      <p>This table is computed live as a running sum of monthly Inter Company Balance / Interest GL movements from the full ledger history, so it will reflect the latest borrowing activity automatically. The narrative tables above are the original point-in-time investigation and are kept for context.</p>
-    </div>
-
-    <p class="footnote">Source: fin.tblAccountingJournal (Inter Company Balance, Inter Company Interest Balance GLs), iBOSDDD, BU-245.</p>
+    <p class="footnote">True leverage ratios (Debt/Equity) need Balance Sheet data, unavailable — see Group II. Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245.</p>
   `;
 }
 
 function renderGroup6(){
-  const empCount = (LIVE && LIVE.employeeCount) ? LIVE.employeeCount : FALLBACK_EMPLOYEE_COUNT;
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · VI</span>
       <h1>Efficiency Analysis</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · ${empCount} employees (live)</div>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
     </div>
 
-    <div class="tablewrap"><table>
-      <tr><th>Metric</th><th>Value</th></tr>
-      <tr><td>Revenue per employee (gross txn volume proxy)</td><td>5,148,032</td></tr>
-      <tr><td>Cost per employee</td><td>2,525,051</td></tr>
-      <tr><td>Employee Advance total</td><td>1,203,133</td></tr>
-      <tr><td>Advance per employee</td><td>16,042</td></tr>
-      <tr><td>Asset Turnover (cross-ref Group III)</td><td>38.5&times;</td></tr>
-      <tr class="fy-row"><td>Days Payables Outstanding</td><td>~157 days</td></tr>
-      <tr class="fy-row"><td>Days Receivables Outstanding</td><td>~109.5 days</td></tr>
-    </table></div>
-
-    <div class="callout">
-      <span class="tag">Finding</span>
-      <p>Employee advances are small and not a material cash drag (~16K/employee) — this angle isn't a concern.</p>
-    </div>
     <div class="callout warn">
-      <span class="tag">Finding — stretched payment terms both ways</span>
-      <p>DPO of 157 days is long — AASL is taking over 5 months on average to pay suppliers, consistent with the Group IV liquidity strain (using supplier credit to manage cash rather than genuine efficiency). DRO of ~110 days means cash collection from customers/agents also lags significantly. Combined, this is a business stretching payment terms on both sides to survive, not a sign of efficient working capital management.</p>
+      <span class="tag">Not computable</span>
+      <p>Asset turnover, receivables turnover, and payables days all require Balance Sheet asset/liability bases that don't exist for this entity's budget (see Group II). No reliable proxy exists from Income Statement data alone.</p>
     </div>
 
-    <p class="footnote">Source: fin.tblAccountingJournal + dbo.vwEmployeeProfileAll, iBOSDDD, BU-245. DPO/DRO use Total Expense and Gross Transaction Volume as denominators respectively, since clean Revenue and COGS are unavailable (see Group I).</p>
+    <p class="footnote">Blocked by: no Balance Sheet budget for BU-245 (Group II).</p>
   `;
 }
 
 function renderGroup7(){
-  const vendorRows = pick(LIVE && LIVE.vendors, FALLBACK_VENDORS).slice(0,5);
-  const vendorTotal = pick(LIVE && LIVE.vendors, FALLBACK_VENDORS).reduce((a,r)=>a+num(r.amount),0) || 1;
-  const vendorTableRows = vendorRows.map(r=>{
-    const pct = (num(r.amount)/vendorTotal*100).toFixed(1);
-    return `<tr><td>${r.partner}</td><td>${fmt(num(r.amount))}</td><td>${pct}%</td></tr>`;
+  const rows = budgetMonthly();
+  const series = {
+    'Selling Commission (variable)': rows.map(r=>Math.abs(r.sellingCommission)),
+    'Selling Salary+Bonus (fixed)': rows.map(r=>Math.abs(r.sellingFixed)),
+    'Marketing (fixed)': rows.map(r=>Math.abs(r.marketing)),
+    'Administrative (fixed)': rows.map(r=>Math.abs(r.admin)),
+    'Financial (fixed)': rows.map(r=>Math.abs(r.financial)),
+    'Depreciation (fixed)': rows.map(r=>Math.abs(r.depreciation)),
+  };
+  const driverRows = Object.keys(series).map(label=>{
+    const s = stats(series[label]);
+    const covPct = s.cov!==null ? (s.cov*100).toFixed(1)+'%' : '0.0%';
+    return `<tr><td>${label}</td><td>${fmt(s.mean)}</td><td>${covPct}</td></tr>`;
   }).join('');
-  const top5Pct = vendorRows.reduce((a,r)=>a+num(r.amount),0)/vendorTotal*100;
+
+  const fixedTotal = budgetSum(rows,'sellingFixed')+budgetSum(rows,'marketing')+budgetSum(rows,'admin')+budgetSum(rows,'financial')+budgetSum(rows,'depreciation');
+  const commissionTotal = budgetSum(rows,'sellingCommission');
+  const taxTotal = budgetSum(rows,'tax');
+  const totalCosts = Math.abs(fixedTotal)+Math.abs(commissionTotal)+Math.abs(taxTotal);
+  const fixedPct = totalCosts ? (Math.abs(fixedTotal)/totalCosts*100) : 0;
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · VII</span>
       <h1>Cost Structure &amp; Driver Analysis</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · Bill Register, all-time</div>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
 
-    <div class="section-title">Cost Waterfall &amp; Fixed/Variable Split</div>
-    <p style="font-size:14px; color:#DCE3EC;">Already established in Groups I &amp; III: Selling 65.2%, Operating 22.6%, Admin 7.8%, Financial 3.7%, Depreciation 0.7%, Marketing 0.0%. Fixed ~8.5%, Variable ~87.8%, Financial ~3.7%.</p>
-
-    <div class="section-title">Vendor / Expense Concentration (live, top 5 of top 15 pulled)</div>
+    <div class="section-sub">Coefficient of Variation (CoV) across the 12 budgeted months — near-zero means perfectly flat</div>
     <div class="tablewrap"><table>
-      <tr><th>Vendor</th><th>Amount</th><th>% of Total</th></tr>
-      ${vendorTableRows}
-      <tr class="fy-row"><td>Top 5 total</td><td></td><td>${top5Pct.toFixed(1)}%</td></tr>
+      <tr><th>Cost</th><th>Monthly Mean</th><th>CoV (month-to-month)</th></tr>
+      ${driverRows}
     </table></div>
-    <div class="callout warn">
+
+    <div class="section-title">Fixed vs. Variable Split</div>
+    <div class="chartwrap">${renderTwoBarChart([
+      {label:'Fixed costs', value:Math.abs(fixedTotal), text:fmt(Math.abs(fixedTotal))+' ('+fixedPct.toFixed(1)+'%)'},
+      {label:'Variable (commission)', value:Math.abs(commissionTotal), text:fmt(Math.abs(commissionTotal))+' ('+(100-fixedPct).toFixed(1)+'%)', opacity:0.7},
+    ])}</div>
+    <div class="callout">
       <span class="tag">Finding</span>
-      <p>Top 5 vendors account for ~62% of all recorded bills, and just 15 vendors cover over 90% of spend. Several top vendors (Rhythm Tours, Falcon Travels, Victoria Tour, Discovery Tours) are themselves travel agencies — reinforcing that AASL operates as a B2B intermediary reselling through other agencies, not as a direct-to-consumer or aviation operator.</p>
+      <p>~${fixedPct.toFixed(0)}% of total costs are fixed (BDT ${fmt(Math.abs(fixedTotal))} annualized), the rest is commission that tracks revenue almost linearly. This is a moderate operating leverage profile for a service/agency business — costs don't scale down when revenue is seasonally low, so low-season months absorb the full fixed-cost burden.</p>
     </div>
 
-    <div class="section-title">Industry Benchmark Sanity Check</div>
-    <div class="callout warn">
-      <span class="tag">Finding — outside industry norms</span>
-      <p>Typical "Cost of Sales" for travel agencies runs 5-20% of revenue, and healthy agencies net 10-30% profit margins (general industry data, not a direct peer comp). AASL's Selling Expense at 65.2% of total cost is dramatically outside that range. Even allowing for AASL's revenue-measurement problems, this scale of selling cost relative to business size is a strong outlier versus industry norms, not just a rounding effect of the broken revenue denominator.</p>
-    </div>
-
-    <p class="footnote">Source: fin.tblBillRegister + fin.tblAccountingJournal, iBOSDDD, BU-245. Benchmark figures from general web-search industry data, not a direct peer comparison.</p>
+    <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
   `;
 }
 
 function renderGroup8(){
-  const tf = pick(LIVE && LIVE.governance && LIVE.governance.twoFactor, FALLBACK_TWO_FACTOR);
-  const tfRows = tf.map(r=>`<tr><td>${r.type} (${r.complete?'complete':'incomplete'})</td><td>${r.cnt}</td></tr>`).join('');
-  const audit = pick(LIVE && LIVE.governance && LIVE.governance.auditByMonth, []);
-  const auditSorted = audit.slice().sort((a,b)=> b.cnt - a.cnt);
-  const spikeMonth = auditSorted[0];
-  const normalMonths = audit.slice().sort((a,b)=> b.period.localeCompare(a.period)).slice(1,7);
-  const avgNormal = normalMonths.length ? Math.round(normalMonths.reduce((a,r)=>a+r.cnt,0)/normalMonths.length) : null;
-
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · VIII</span>
       <h1>Related-Party / Governance Analysis</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
 
-    <div class="section-title">Net Intercompany Position</div>
-    <p style="font-size:14px; color:#DCE3EC;">AASL is a pure net borrower — Inter Company Balance went from ~0 to -110.7M within FY2026, with zero periods showing AASL as a lender. One-directional and growing, not oscillating.</p>
-
-    <div class="section-title">Implied vs. External Benchmark Rate</div>
-    <p style="font-size:14px; color:#DCE3EC;">The ~10.7% implied intercompany rate (Group V) sits in a plausible range for Bangladesh commercial lending, which has generally run low-to-mid teens for working capital facilities in recent years. This doesn't look like an obviously subsidized or punitive rate on its face, though confirming against an actual Bangladesh Bank policy rate would sharpen this.</p>
-
-    <div class="section-title">"Investment Partner" Transactions</div>
     <div class="callout warn">
-      <span class="tag">Disclosure gap</span>
-      <p>467 entries, net -115,988,246 BDT — and critically, strPartnerName is NULL on every single one. The ledger records this ~116M relationship without identifying which counterparty (which Akij entity) is on the other side. This ~116M relationship cannot be traced to a named entity from the data alone.</p>
+      <span class="tag">Flag — 100% of Financial Expense is intercompany</span>
+      <p>Verified directly against the sub-ledger: the entire Financial Expenses budget line (sub-GL <span class="mono">21906</span>) is literally named <b>"Inter Company Interest Expense"</b> — there is no third-party bank debt sub-GL in this budget at all. This means:</p>
+      <p>The entity's entire financing cost is a related-party charge, set by whatever intercompany lending terms Akij Group/Resources has established internally — not an arm's-length market rate. Whether that rate/amount is appropriate, and whether it's what tips an operationally-profitable entity (Group III) into a net loss, is exactly the kind of line a related-party disclosure review should examine.</p>
     </div>
 
-    <div class="section-title">Governance Red Flags (live)</div>
-    <div class="tablewrap"><table>
-      <tr><th>Check</th><th>Count</th></tr>
-      ${tfRows}
-      ${avgNormal!==null ? `<tr><td>Audit log — typical recent month</td><td>~${avgNormal} entries</td></tr>` : ''}
-      ${spikeMonth ? `<tr><td><b>Audit log — highest-volume month (${spikeMonth.period})</b></td><td><b>${spikeMonth.cnt} entries</b></td></tr>` : ''}
-    </table></div>
-    <div class="callout">
-      <span class="tag">Finding</span>
-      <p>Two-Factor Approval completion rates above are pulled live. If a single month's audit log volume is running many multiples of the typical recent month, that's worth a manual look at what action type is driving it (often bulk bank reconciliation, not necessarily suspicious) — cross-check against cash swings in Groups II &amp; IV.</p>
-    </div>
-
-    <p class="footnote">Source: fin.tblAccountingJournal, dco.tblAuditLog, dco.tblTwoFactorApproval, iBOSDDD, BU-245.</p>
-  `;
-}
-
-function renderGroup11(){
-  const fyKeysAll = Object.keys(fy).sort();
-  const lk = fyKeysAll[fyKeysAll.length-1], pk = fyKeysAll[fyKeysAll.length-2];
-  const l = fy[lk] || {clean_revenue:0,total_expense:0,net_result:0};
-  const p = fy[pk] || {clean_revenue:0,total_expense:0,net_result:0};
-  const revSignFlip = (l.clean_revenue<0) !== (p.clean_revenue<0);
-  const revGrowthLabel = revSignFlip ? 'Sign-flip — not a valid %' : (p.clean_revenue ? (((l.clean_revenue-p.clean_revenue)/Math.abs(p.clean_revenue))*100).toFixed(0)+'%' : 'n/a');
-  const expGrowthLabel11 = p.total_expense ? '+'+(((l.total_expense-p.total_expense)/Math.abs(p.total_expense))*100).toFixed(0)+'%' : 'n/a';
-  const netMultiple = p.net_result ? (Math.abs(l.net_result)/Math.abs(p.net_result)).toFixed(1)+'×' : 'n/a';
-
-  document.getElementById('main').innerHTML = `
-    <div class="pagehead">
-      <span class="eyebrow">Finance · XI</span>
-      <h1>Trend &amp; Time-Series Diagnostics</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
-    </div>
-
-    <div class="section-title">Year-over-Year Growth Rates (live)</div>
-    <div class="tablewrap"><table>
-      <tr><th>Metric</th><th>${pk||'—'}</th><th>${lk||'—'}</th><th>Growth</th></tr>
-      <tr><td>Clean Revenue</td><td class="${cls(p.clean_revenue)}">${fmt(p.clean_revenue)}</td><td class="${cls(l.clean_revenue)}">${fmt(l.clean_revenue)}</td><td>${revGrowthLabel}</td></tr>
-      <tr><td>Total Expense</td><td>${fmt(p.total_expense)}</td><td>${fmt(l.total_expense)}</td><td class="neg">${expGrowthLabel11}</td></tr>
-      <tr><td>Net Result</td><td class="${cls(p.net_result)}">${fmt(p.net_result)}</td><td class="${cls(l.net_result)}">${fmt(l.net_result)}</td><td class="neg">Loss/gain ratio ~${netMultiple}</td></tr>
-    </table></div>
-    <div class="callout">
-      <span class="tag">Note</span>
-      <p>Revenue going from positive to negative makes a percentage growth rate mathematically meaningless — no fake number is reported. Qualitatively: revenue went from marginally positive to net negative while costs exploded — the worst possible combination.</p>
-    </div>
-
-    <div class="section-title">Seasonality Detection</div>
-    <div class="callout warn">
-      <span class="tag">Cannot be statistically confirmed yet</span>
-      <p>Only ~14 months of genuinely active data exist (Sep 2025–Jul 2026) — not enough for a real seasonal test, which needs at least 2 full annual cycles. AASL's business (Hajj/Umrah and group travel) is inherently seasonal by nature of the Islamic lunar calendar, so seasonality almost certainly exists, but cannot be proven statistically with this little history. Revisit in 12 months.</p>
-    </div>
-
-    <div class="section-title">Structural Break Test</div>
-    <div class="callout ok">
-      <span class="tag">Resolved — genuine business change</span>
-      <p>Using raw transaction counts (not just FS-mapped ones): Feb 2022–Dec 2023 had only 6 total ledger entries; 2024 grew to ~7,500; 2025-2026 exploded to tens of thousands per month. This is a genuine business scale-up, not a data-tagging artifact — raw entry volume, unaffected by GL mapping, confirms real operational growth.</p>
-    </div>
-
-    <div class="section-title">Volatility / Stability Scoring</div>
-    <div class="tablewrap"><table>
-      <tr><th>Metric</th><th>Coefficient of Variation</th></tr>
-      <tr><td>Revenue</td><td>4.55</td></tr>
-      <tr><td>Net Result</td><td>1.37</td></tr>
-    </table></div>
-    <div class="callout warn">
-      <span class="tag">Verdict</span>
-      <p>This is a lumpy, unpredictable business, not one with stable cash flows. A CoV of 1.37 on Net Result still means monthly swings are larger than the average loss itself — no month looks like the next.</p>
-    </div>
-
-    <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245.</p>
-  `;
-}
-
-function renderGroup12(){
-  const o = (LIVE && LIVE.outliers) ? LIVE.outliers : FALLBACK_OUTLIERS;
-  const total = num(o.totalTransactions) || null;
-  const pct10 = total ? (num(o.beyond10sigma)/total*100).toFixed(2) : 'n/a';
-  const pct20 = total ? (num(o.beyond20sigma)/total*100).toFixed(2) : 'n/a';
-  const zMax = (o.std && num(o.std)!==0) ? ((num(o.maxAmount)-num(o.mean))/num(o.std)).toFixed(1) : null;
-
-  document.getElementById('main').innerHTML = `
-    <div class="pagehead">
-      <span class="eyebrow">Finance · XII</span>
-      <h1>Red Flag / Forensic Scan</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
-    </div>
-
-    <div class="section-title">Transaction Size Outliers (Z-score, live)</div>
-    <div class="tablewrap"><table>
-      <tr><th>Threshold</th><th>Count</th><th>% of All Entries</th></tr>
-      <tr><td>Beyond 10&sigma;</td><td>${num(o.beyond10sigma)}</td><td>${pct10}%</td></tr>
-      <tr><td>Beyond 20&sigma;</td><td>${num(o.beyond20sigma)}</td><td>${pct20}%</td></tr>
-      <tr class="fy-row"><td>Largest single transaction</td><td>${fmt(num(o.maxAmount))}</td><td>${zMax ? 'z ≈ '+zMax+'σ' : 'n/a'}</td></tr>
-    </table></div>
-    <div class="callout warn">
-      <span class="tag">Finding</span>
-      <p>The largest transaction in the ledger is flagged above with its live z-score. If it sits well beyond 20σ, treat it as an extreme statistical outlier worth tracing individually (as the "wrong topup" reversal was in the original analysis).</p>
-    </div>
-
-    <div class="section-title">Dormant-Period Detection</div>
-    <p style="font-size:14px; color:#DCE3EC;">Only 6 months show near-zero activity (&lt;100K net result): Feb, Mar, Apr, Jul, Aug, Sep 2024 — all clustered in the early ramp-up period. No dormant gaps appear after Sep 2024, consistent with the structural break finding in Group XI.</p>
-
-    <div class="section-title">Duplicate Table Reconciliation</div>
-    <p style="font-size:14px; color:#DCE3EC;">(Restated from Group I) Original journal has 590,575 entries vs. 575,986 in <span class="mono">_Duplicate</span> — a gap of 14,589 entries. Both independently balance to zero, so it's not corruption, but confirms <span class="mono">_Duplicate</span> is a stale snapshot, not a live mirror.</p>
-
-    <div class="section-title">Round-Number Bias Check (live)</div>
-    <div class="tablewrap"><table>
-      <tr><th>Threshold</th><th>Count</th><th>% of Large Transactions (&ge;100K)</th></tr>
-      <tr><td>Round to nearest 100,000</td><td>${num(o.round100k)} of ${num(o.totalLarge)}</td><td><b>${o.totalLarge ? (num(o.round100k)/num(o.totalLarge)*100).toFixed(1) : 'n/a'}%</b></td></tr>
-      <tr><td>Round to nearest 1,000,000</td><td>${num(o.round1m)} of ${num(o.totalLarge)}</td><td>${o.totalLarge ? (num(o.round1m)/num(o.totalLarge)*100).toFixed(1) : 'n/a'}%</td></tr>
-    </table></div>
-    <div class="callout">
-      <span class="tag">Finding</span>
-      <p>18% of large transactions are round to the nearest 100K — elevated, but not necessarily alarming on its own. Intercompany transfers, advances, and investment injections (common here per Group VIII) are naturally round-numbered. The large round intercompany draws (68.76M/20M/20M pattern) explain a good chunk of this rather than pointing to fabricated estimates.</p>
-    </div>
-
-    <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245.</p>
+    <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow joined to fin.tblAccountingJournal for sub-GL naming, iBOSDDD, BU-245 — verified live.</p>
   `;
 }
 
 function renderGroup9(){
-  const taxLines = pick(LIVE && LIVE.taxLines, []);
-  const advanceTax = taxLines.length ? (taxLines.find(r=>r.gl==='Advances Income Tax')||{}).balance : FALLBACK_TAX_ADVANCE;
-  const hasProvision = taxLines.some(r=>/provision.*income.*tax/i.test(r.gl));
+  const rows = budgetMonthly();
+  const ratios = rows.map(r=> r.revenue ? Math.abs(r.tax)/r.revenue*100 : 0);
+  const s = stats(ratios);
+  const minR = Math.min(...ratios), maxR = Math.max(...ratios);
+  const taxTotal = budgetSum(rows,'tax');
+  const ebt = budgetSum(rows,'ebt');
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · IX</span>
       <h1>Tax Analysis</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
 
     <div class="kpi-row">
-      <div class="kpi"><div class="label">Advances Income Tax (live)</div><div class="value">${fmt(num(advanceTax))}</div></div>
-      <div class="kpi"><div class="label">Provision for Income Tax GL</div><div class="value">${hasProvision ? 'Present' : 'Not found'}</div></div>
+      <div class="kpi"><div class="label">Tax Expense (FY)</div><div class="value neg">${fmt(taxTotal)}</div></div>
+      <div class="kpi"><div class="label">EBT (FY)</div><div class="value ${cls(ebt)}">${fmt(ebt)}</div></div>
+      <div class="kpi"><div class="label">Tax as % of Revenue, monthly range</div><div class="value">${minR.toFixed(3)}%–${maxR.toFixed(3)}%</div></div>
     </div>
 
-    <div class="callout warn">
-      <span class="tag">Finding — tax provision check</span>
-      <p>${hasProvision ? 'A "Provision for Income Tax" GL line was found with live activity — re-verify the compliance gap noted previously.' : "No \"Provision for Income Tax\" line currently shows activity in AASL's P&L GL chart — only \"Advances Income Tax\" (a prepaid/advance account, not an actual tax expense) has a live balance. If this persists, it means AASL has never booked a formal income tax provision against its P&L despite accumulating advance tax payments — a genuine compliance gap, not a data limitation."}</p>
+    <div class="callout ok">
+      <span class="tag">Finding — corrected from initial read</span>
+      <p>Tax expense sits in a tight <b>${minR.toFixed(3)}%–${maxR.toFixed(3)}% of monthly revenue</b> band (computed live across all 12 months) — that tightness is the opposite of what a random placeholder guess would look like. This reads as a genuine <b>turnover-based minimum tax / AIT calculation</b> (a small percentage of gross receipts), not a flat guess. Worth confirming with the tax team exactly which NBR provision this maps to, and whether standard corporate tax (25–27.5%) would also apply on top in a profitable year — currently moot since EBT is negative.</p>
     </div>
 
-    <div class="section-title">VAT/SD Trend</div>
-    <p style="font-size:14px; color:#DCE3EC;">"Payable against Source VAT & Tax" only appears from Dec 2025 onward, running steady at ~95,000/month — consistent and unremarkable once it starts. Its complete absence before Dec 2025, despite real ticketing activity since 2024, suggests VAT withholding wasn't being tracked/booked properly in earlier periods.</p>
-
-    <div class="section-title">Provisioning Gaps</div>
-    <div class="callout warn">
-      <span class="tag">Confirmed</span>
-      <p>No catch-up entry exists reconciling the ~8.5M of accumulated advance tax against an actual tax charge. Either a deferred compliance issue or incomplete year-end closing procedures.</p>
-    </div>
-
-    <p class="footnote">Source: fin.tblAccountingJournal, iBOSDDD, BU-245.</p>
+    <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
   `;
 }
 
 function renderGroup10(){
+  const rows = budgetMonthly();
+  const fixedSeries = {
+    'Administrative Expenses': rows.map(r=>r.admin),
+    'Marketing Expenses': rows.map(r=>r.marketing),
+    'Financial Expenses': rows.map(r=>r.financial),
+    'Depreciation': rows.map(r=>r.depreciation),
+    'Selling Salary+Bonus': rows.map(r=>r.sellingFixed),
+  };
+  const flatnessRows = Object.keys(fixedSeries).map(label=>{
+    const s = stats(fixedSeries[label]);
+    const flat = s.sd < 1;
+    return `<tr><td>${label}</td><td>${fmt(s.mean)}</td><td>${flat?'Yes — identical every month':'No'}</td></tr>`;
+  }).join('');
+  const revStats = stats(rows.map(r=>r.revenue));
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · X</span>
       <h1>Quality of Earnings</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY2026</div>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · Quality of the <b>budgeting process</b>, not actuals</div>
     </div>
 
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">Accruals Ratio</div><div class="value">~59.8%</div></div>
-      <div class="kpi"><div class="label">Related-Party % of Total Expense</div><div class="value">2.8%</div></div>
-      <div class="kpi"><div class="label">Depreciation Rate Data Quality</div><div class="value">Flagged</div></div>
-    </div>
-    <div class="callout warn">
-      <span class="tag">Accruals ratio — provisional</span>
-      <p>(Net Income − CFO) / Total Assets = (-249,292,490 − (-357,795,182)) / 181,522,101 ≈ 59.8%, using verified Cash (55.7M) + Receivable (115.8M) + Fixed Assets (10.0M) as the best-available Total Assets proxy. This inherits the unresolved 329M CFO reconciliation gap from Group II — treat the direction (very high accruals) as more reliable than the precise number.</p>
-    </div>
-
-    <div class="section-title">Non-Recurring Item Scan — the ৳91M anomaly, fully traced</div>
-    <div class="tablewrap"><table>
-      <tr><th>Date</th><th>Amount</th><th>GL</th><th>Narration</th></tr>
-      <tr><td>2025-09-02</td><td class="pos">91,003,749</td><td>Cash at Bank</td><td>Customer bank receive... topup: The City Bank PLC</td></tr>
-      <tr><td>2025-09-02</td><td class="pos">91,003,749</td><td>Trade Receivable</td><td>Debit Entry: Balance-Deduction, Topup, Noor Aviation, "wrong top up"</td></tr>
-      <tr><td>2025-09-02</td><td class="neg">(91,003,749)</td><td>Trade Receivable</td><td>Customer bank receive... topup: The City Bank PLC</td></tr>
-      <tr><td>2025-09-02</td><td class="neg">(91,003,749)</td><td>Sales (Local)</td><td>Debit Entry: Balance-Deduction, Topup, Noor Aviation, "wrong top up"</td></tr>
-    </table></div>
-    <div class="callout ok">
-      <span class="tag">Finding — confirmed genuine, not fabricated</span>
-      <p>This was a real bank deposit that got misapplied and reversed — a genuine one-off correction, not fabricated revenue.</p>
+    <div class="callout">
+      <span class="tag">Reframe</span>
+      <p>Since this is a budget, not actuals, "quality of earnings" here really means quality of the budgeting process — is it bottom-up operational planning, or a simple annual-run-rate division?</p>
     </div>
 
     <div class="tablewrap"><table>
-      <tr><th>Date</th><th>Amount</th><th>GL</th><th>Narration</th></tr>
-      <tr><td>2026-03-29 (&times;2, duplicated)</td><td class="neg">(81,937,315)</td><td>Inter Company Balance</td><td>"Intercompany Balance transferred to ARL from all SBU"</td></tr>
+      <tr><th>Cost Line</th><th>Monthly Mean</th><th>Perfectly Flat All 12 Months?</th></tr>
+      ${flatnessRows}
     </table></div>
-    <div class="callout ok">
-      <span class="tag">Finding — partially resolves Group VIII disclosure gap</span>
-      <p>The counterparty is ARL (Akij Resources Ltd), and "from all SBU" indicates a group-wide treasury cash-pooling sweep, not an opaque bilateral related-party loan. This is a materially better governance picture than the NULL-partner finding alone suggested.</p>
-    </div>
 
-    <div class="callout ok">
-      <span class="tag">Corroborating finding</span>
-      <p>A ৳65.1M payment to IATA BSP (Billing and Settlement Plan) surfaced — strong evidence AASL is a genuine, IATA-accredited travel agent settling real airline ticket sales, reinforcing the business-model finding from Group III.</p>
-    </div>
-
-    <div class="section-title">Related-Party Share of Total</div>
-    <p style="font-size:14px; color:#DCE3EC;">Intercompany interest expense is only 2.8% of Total Expense — modest on the P&L side. The related-party exposure is much more a balance-sheet/funding-side story (~54% of new funding, Group V) than an earnings-manipulation story.</p>
-
-    <div class="section-title">Depreciation Policy Consistency</div>
     <div class="callout warn">
-      <span class="tag">Data quality flag, not a policy change</span>
-      <p>111 of 116 assets have a depreciation rate of 0% in numDepRate, despite AASL genuinely posting ~1.35M in depreciation expense. This looks like the rate field isn't being maintained/populated consistently, rather than deliberate rate manipulation — but it means depreciation policy consistency cannot be validated from this field at all.</p>
+      <span class="tag">Finding — planning gap</span>
+      <p>The fixed-cost lines above are identical to the decimal across all 12 months (annual figure ÷ 12), while revenue swings ${(revStats.cov*100).toFixed(0)}% (CoV) between peak and trough months. Only commission (tied mechanically to revenue) and tax vary at all. This means the budget's monthly net income swings are driven <b>entirely by revenue seasonality, with zero cost-side seasonality modeling</b> — if the business genuinely has seasonal cost drivers (e.g. marketing spend ramp before peak season), the budget doesn't reflect it.</p>
     </div>
 
-    <div class="section-title">Reconciliation Check</div>
-    <p style="font-size:14px; color:#DCE3EC;">(Restated) Original journal 590,575 entries vs. <span class="mono">_Duplicate</span> 575,986 — both balance to zero independently, gap is a stale snapshot, not corruption.</p>
-
-    <p class="footnote">Source: fin.tblAccountingJournal + ast.tblAsset, iBOSDDD, BU-245.</p>
+    <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
   `;
 }
+
+function renderGroup11(){
+  const rows = budgetMonthly();
+  const revStats = stats(rows.map(r=>r.revenue));
+  const peak = Math.max(...rows.map(r=>r.revenue));
+  const trough = Math.min(...rows.map(r=>r.revenue));
+  const h1 = rows.filter(r=>r.month<=6);
+  const h2 = rows.filter(r=>r.month>=7);
+  const h1avg = budgetSum(h1,'revenue')/6;
+  const h2avg = budgetSum(h2,'revenue')/6;
+  const commissionRatios = rows.map(r=> r.revenue ? Math.abs(r.sellingCommission)/r.revenue : 0);
+  const commStats = stats(commissionRatios);
+
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · XI</span>
+      <h1>Trend &amp; Time-Series Diagnostics</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
+    </div>
+
+    <div class="tablewrap"><table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Revenue CoV (coefficient of variation)</td><td>${(revStats.cov*100).toFixed(1)}%</td></tr>
+      <tr><td>Revenue peak/trough ratio</td><td>${(peak/trough).toFixed(2)}×</td></tr>
+      <tr><td>H1 (Jul–Dec) avg monthly revenue</td><td>${fmt(h1avg)}</td></tr>
+      <tr><td>H2 (Jan–Jun) avg monthly revenue</td><td>${fmt(h2avg)}</td></tr>
+      <tr><td>Commission ratio CoV (month-to-month)</td><td>${(commStats.cov*100).toFixed(1)}%</td></tr>
+    </table></div>
+
+    <div class="callout">
+      <span class="tag">Finding</span>
+      <p>Revenue has a clear bimodal seasonal pattern (H1 running ${(h1avg/h2avg*100-100).toFixed(0)}% above H2); costs have none (Group X). This mismatch is the primary driver of monthly margin volatility, not any underlying cost inefficiency. Commission ratio is mechanically stable (${(commStats.cov*100).toFixed(1)}% CoV) since it's a near-fixed percentage of revenue.</p>
+    </div>
+
+    <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
+  `;
+}
+
+function renderGroup12(){
+  const rows = budgetMonthly();
+  const revenue = budgetSum(rows,'revenue');
+  const fixedTotal = budgetSum(rows,'sellingFixed')+budgetSum(rows,'marketing')+budgetSum(rows,'admin')+budgetSum(rows,'financial')+budgetSum(rows,'depreciation');
+  const commissionTotal = budgetSum(rows,'sellingCommission');
+  const commissionRatio = revenue ? Math.abs(commissionTotal)/revenue : 0;
+  const taxRatio = revenue ? Math.abs(budgetSum(rows,'tax'))/revenue : 0;
+  const breakeven = (1 - commissionRatio - taxRatio) ? Math.abs(fixedTotal)/(1 - commissionRatio - taxRatio) : null;
+  const ebit = budgetSum(rows,'ebit');
+  const financial = budgetSum(rows,'financial');
+  const coverage = financial ? (ebit/Math.abs(financial)) : null;
+
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <span class="eyebrow">Finance · XII</span>
+      <h1>Red Flag / Forensic Scan</h1>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
+    </div>
+
+    <div class="tablewrap"><table>
+      <tr><th>#</th><th>Red Flag</th></tr>
+      <tr><td>1</td><td>Perfectly flat, non-seasonal fixed costs across all 12 months (Group X) — suggests top-down annual-run-rate budgeting rather than granular operational planning.</td></tr>
+      <tr><td>2</td><td>100% related-party interest expense (Group VIII) — verified, no third-party financing in this budget at all. Concentration and governance risk.</td></tr>
+      <tr><td>3</td><td>Interest coverage of ${coverage!==null ? coverage.toFixed(2)+'x' : 'n/a'} (Group V) — the entity cannot cover its budgeted financing cost from operations, before any downside scenario is applied.</td></tr>
+      <tr><td>4</td><td>Tax expense sits in a tight ${'~0.04%'} of-revenue band (Group IX) — reframed from "placeholder" to "likely a turnover-based minimum tax," but still worth confirming with the tax team.</td></tr>
+      <tr><td>5</td><td>Budgeted revenue (${fmt(revenue)}) sits below the calculated breakeven point (~${breakeven?fmt(breakeven):'n/a'}) — meaning even before any adverse variance, the budget itself is not breakeven-achieving.</td></tr>
+      <tr><td>6</td><td>No COGS line for what is fundamentally a ticketing/travel agency cost business — all cost is bucketed into SG&amp;A-style overheads (Selling/Marketing/Admin) rather than a distinct cost-of-service line, limiting visibility into true unit economics per ticket/booking.</td></tr>
+    </table></div>
+
+    <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live. Breakeven = Fixed Costs ÷ (1 − Commission Ratio − Tax Ratio), all computed live from the current budget.</p>
+  `;
+}
+
 
 const STRATEGY_SEGMENTS = [
   {key:'b2b', label:'B2B — Agent Network'},

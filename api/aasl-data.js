@@ -39,6 +39,45 @@ async function run(pool, query, params) {
   return result.recordset;
 }
 
+function aggregateBudgetMonthly(rawRows) {
+  const byMonth = {};
+  const sellingSubGlSeries = {};
+  rawRows.forEach((r) => {
+    const m = r.month;
+    byMonth[m] = byMonth[m] || { month: m, revenue: 0, admin: 0, marketing: 0, depreciation: 0, financial: 0, tax: 0 };
+    const amt = Number(r.amount) || 0;
+    if (r.gl === 'Sales (Local)') byMonth[m].revenue += amt;
+    else if (r.gl === 'Administrative Expenses') byMonth[m].admin += amt;
+    else if (r.gl === 'Marketing Expenses') byMonth[m].marketing += amt;
+    else if (r.gl && r.gl.indexOf('Depreciation') === 0) byMonth[m].depreciation += amt;
+    else if (r.gl === 'Financial Expenses') byMonth[m].financial += amt;
+    else if (r.gl === 'Tax Expenses') byMonth[m].tax += amt;
+    else if (r.gl === 'Selling Expenses') {
+      const key = String(r.subGlId);
+      sellingSubGlSeries[key] = sellingSubGlSeries[key] || [];
+      sellingSubGlSeries[key].push({ month: m, amount: amt });
+    }
+  });
+  const sellingFixedPerMonth = {};
+  const sellingCommissionPerMonth = {};
+  Object.keys(sellingSubGlSeries).forEach((key) => {
+    const series = sellingSubGlSeries[key];
+    const amounts = series.map((s) => s.amount);
+    const isFixed = amounts.every((a) => Math.abs(a - amounts[0]) < 0.01);
+    series.forEach((s) => {
+      if (isFixed) sellingFixedPerMonth[s.month] = (sellingFixedPerMonth[s.month] || 0) + s.amount;
+      else sellingCommissionPerMonth[s.month] = (sellingCommissionPerMonth[s.month] || 0) + s.amount;
+    });
+  });
+  return Object.keys(byMonth)
+    .map((m) => ({
+      ...byMonth[m],
+      sellingFixed: sellingFixedPerMonth[m] || 0,
+      sellingCommission: sellingCommissionPerMonth[m] || 0,
+    }))
+    .sort((a, b) => a.month - b.month);
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
   try {
@@ -168,11 +207,42 @@ module.exports = async (req, res) => {
         std: { type: sql.Float, value: std },
       });
 
+    const budgetHeaderRows = await run(pool, `
+      SELECT TOP 1 intBudgetHeaderId AS id, strFiscalYear AS fiscalYear, strBudgetCode AS code, dteActionDateTime AS actionDateTime
+      FROM bgt.tblBudgetIncomeExpenseHeader
+      WHERE intBusinessUnitId = @bu AND isActive = 1
+      ORDER BY dteActionDateTime DESC`);
+    const budgetHeader = budgetHeaderRows[0] || null;
+
+    let budgetMonthly = [];
+    if (budgetHeader) {
+      const rawBudgetRows = await run(pool, `
+        SELECT r.intMonthId AS month, gl.strGeneralLedgerName AS gl, r.intSubGlId AS subGlId, r.numAmount AS amount
+        FROM bgt.tblBudgetIncomeExpenseRow r
+        JOIN fin.tblGeneralLedger gl ON gl.intGeneralLedgerId = r.intGeneralLedgerId
+        WHERE r.intBudgetHeaderId = @budgetHeaderId`,
+        { budgetHeaderId: { type: sql.BigInt, value: budgetHeader.id } });
+      budgetMonthly = aggregateBudgetMonthly(rawBudgetRows);
+    }
+
+    const budgetBsRows = await run(pool, `SELECT COUNT(*) AS cnt FROM bgt.tblBudgetBalanceSheetHeader WHERE intBusinessUnitId = @bu`);
+    const budgetTbRows = await run(pool, `SELECT COUNT(*) AS cnt FROM bgt.tblBudgetTrialBalance WHERE intBusinessUnitId = @bu`);
+    const projCashFlowRows = await run(pool, `
+      SELECT COUNT(*) AS cnt, MIN(dteDate) AS minDate, MAX(dteDate) AS maxDate
+      FROM fin.tblProjectedCashFlowDailyHistory WHERE intUnitId = @bu`);
+
     res.status(200).json({
       meta: {
         businessUnitId: BU_ID,
         businessUnitName: 'Akij Air Service Ltd.',
         generatedAt: new Date().toISOString(),
+      },
+      budget: {
+        header: budgetHeader,
+        monthly: budgetMonthly,
+        balanceSheetBudgetRows: (budgetBsRows[0] || {}).cnt || 0,
+        trialBalanceBudgetRows: (budgetTbRows[0] || {}).cnt || 0,
+        projectedCashFlow: projCashFlowRows[0] || { cnt: 0, minDate: null, maxDate: null },
       },
       monthly,
       balanceSheet,
