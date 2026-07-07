@@ -96,13 +96,15 @@ module.exports = async (req, res) => {
       ORDER BY bookValue DESC`);
 
     const segments = await run(pool, `
-      SELECT COALESCE(NULLIF(strCostRevenueName,''),'(Unassigned)') AS segment,
-        SUM(CASE WHEN strGeneralLedgerName LIKE '%Sales%' OR strGeneralLedgerName LIKE '%Income%' OR strGeneralLedgerName LIKE '%Royalty%' THEN numAmount ELSE 0 END) AS revenue,
-        SUM(CASE WHEN strGeneralLedgerName NOT LIKE '%Sales%' AND strGeneralLedgerName NOT LIKE '%Income%' AND strGeneralLedgerName NOT LIKE '%Royalty%' AND numAmount > 0 THEN numAmount ELSE 0 END) AS expense
-      FROM fin.tblAccountingJournal
-      WHERE intBusinessUnitId = @bu AND isActive = 1 AND dteTransactionDate >= DATEADD(year,-1,GETDATE())
-      GROUP BY COALESCE(NULLIF(strCostRevenueName,''),'(Unassigned)')
-      ORDER BY 2 + 3 DESC`);
+      WITH seg AS (
+        SELECT COALESCE(NULLIF(strCostRevenueName,''),'(Unassigned)') AS segment,
+          SUM(CASE WHEN strGeneralLedgerName LIKE '%Sales%' OR strGeneralLedgerName LIKE '%Income%' OR strGeneralLedgerName LIKE '%Royalty%' THEN numAmount ELSE 0 END) AS revenue,
+          SUM(CASE WHEN strGeneralLedgerName NOT LIKE '%Sales%' AND strGeneralLedgerName NOT LIKE '%Income%' AND strGeneralLedgerName NOT LIKE '%Royalty%' AND numAmount > 0 THEN numAmount ELSE 0 END) AS expense
+        FROM fin.tblAccountingJournal
+        WHERE intBusinessUnitId = @bu AND isActive = 1 AND dteTransactionDate >= DATEADD(year,-1,GETDATE())
+        GROUP BY COALESCE(NULLIF(strCostRevenueName,''),'(Unassigned)')
+      )
+      SELECT segment, revenue, expense FROM seg ORDER BY revenue + expense DESC`);
 
     const vendors = await run(pool, `
       SELECT TOP 15 strPartnerName AS partner, SUM(monTotalAmount) AS amount, COUNT(*) AS cnt
