@@ -134,6 +134,46 @@ module.exports = async (req, res) => {
       GROUP BY strAssetCategory
       ORDER BY bookValue DESC`);
 
+    const assetCategories = await run(pool, `
+      WITH buAssets AS (
+        SELECT intAssetId, strAssetCategory, numAcquisitionValue, numBookValue
+        FROM ast.tblAsset WHERE intBusinessUnitId = @bu AND isActive = 1
+      ),
+      depAgg AS (
+        SELECT d.intAssetId, SUM(d.numDepreciation) AS totalDep
+        FROM ast.tblAssetDepreciationRow d
+        WHERE d.isActive = 1 AND d.intAssetId IN (SELECT intAssetId FROM buAssets)
+        GROUP BY d.intAssetId
+      )
+      SELECT a.strAssetCategory AS category, COUNT(*) AS assets,
+        SUM(a.numAcquisitionValue) AS acqValue,
+        SUM(a.numBookValue) AS systemBookValue,
+        SUM(ISNULL(d.totalDep,0)) AS accumDep
+      FROM buAssets a
+      LEFT JOIN depAgg d ON d.intAssetId = a.intAssetId
+      GROUP BY a.strAssetCategory
+      ORDER BY acqValue DESC`);
+
+    const acBatch = await run(pool, `
+      SELECT strItemName AS name, COUNT(*) AS qty, AVG(numAcquisitionValue) AS acqEach,
+        MAX(CAST(intLifeTimeYear AS INT)) AS lifeYears
+      FROM ast.tblAsset
+      WHERE intBusinessUnitId = @bu AND isActive = 1 AND CAST(dteAcquisitionDate AS DATE) = '2025-12-29'
+      GROUP BY strItemName
+      ORDER BY acqEach DESC`);
+
+    const vehicleAssetIds = await run(pool, `
+      SELECT intAssetId FROM ast.tblAsset
+      WHERE intBusinessUnitId = @bu AND isActive = 1 AND strAssetCategory = 'Building & Construction'
+        AND strItemName LIKE '%Toyota Axio%'`);
+    const vehicleIdList = vehicleAssetIds.map((r) => r.intAssetId).join(',') || '0';
+    const vehicleMonthlyDep = await run(pool, `
+      SELECT FORMAT(d.dtePeriodFrom,'yyyy-MM') AS period, SUM(d.numDepreciation) AS total
+      FROM ast.tblAssetDepreciationRow d
+      WHERE d.intAssetId IN (${vehicleIdList}) AND d.isActive = 1
+      GROUP BY FORMAT(d.dtePeriodFrom,'yyyy-MM')
+      ORDER BY period`);
+
     const segments = await run(pool, `
       WITH seg AS (
         SELECT COALESCE(NULLIF(strCostRevenueName,''),'(Unassigned)') AS segment,
@@ -248,6 +288,11 @@ module.exports = async (req, res) => {
       balanceSheet,
       bank,
       assets,
+      assetAnalysis: {
+        categories: assetCategories,
+        acBatch,
+        vehicleMonthlyDep,
+      },
       segments,
       vendors,
       governance: { twoFactor, auditByMonth },

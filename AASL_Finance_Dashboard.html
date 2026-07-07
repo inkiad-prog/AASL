@@ -924,25 +924,78 @@ function renderAssetBarChart(rows, valueField, labelField, colorFn){
   return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}">${bars}</svg>`;
 }
 
+function liveAssetAnalysis(){
+  return (LIVE && LIVE.assetAnalysis) ? LIVE.assetAnalysis : null;
+}
+function assetCategoryData(){
+  const live = liveAssetAnalysis();
+  return (live && Array.isArray(live.categories) && live.categories.length) ? live.categories : ASSET_CATEGORIES;
+}
+function assetAcBatchData(){
+  const live = liveAssetAnalysis();
+  if(live && Array.isArray(live.acBatch) && live.acBatch.length){
+    return live.acBatch.map(a=>({
+      name: a.name, qty: a.qty, acqEach: a.acqEach,
+      lifeYears: Number(a.lifeYears)===1 ? 1 : 'default',
+      annualRatePct: Number(a.lifeYears)===1 ? 100.0 : 15.0,
+    }));
+  }
+  return AC_BATCH;
+}
+function assetVehicleMonthlyData(){
+  const live = liveAssetAnalysis();
+  if(live && Array.isArray(live.vehicleMonthlyDep) && live.vehicleMonthlyDep.length){
+    const raw = live.vehicleMonthlyDep;
+    const filled = [];
+    raw.forEach((r,i)=>{
+      if(i>0){
+        const [py,pm] = raw[i-1].period.split('-').map(Number);
+        let [y,m] = [py,pm];
+        for(;;){
+          m++; if(m>12){ m=1; y++; }
+          if(y===Number(r.period.split('-')[0]) && m===Number(r.period.split('-')[1])) break;
+          filled.push({period: y+'-'+String(m).padStart(2,'0'), total:0});
+        }
+      }
+      filled.push({period:r.period, total:r.total});
+    });
+    return filled.map((r,i)=>{
+      let note;
+      if(r.total===0) note='gap';
+      else if(i===0) note='backdated catch-up';
+      else if(i===filled.length-1) note='partial month';
+      else if(filled[i-1] && filled[i-1].total===0) note='partial';
+      else note='steady';
+      return {period:r.period, total:r.total, note};
+    });
+  }
+  return VEHICLE_MONTHLY_DEP;
+}
+
 function renderGroup15(){
-  const totalAssets = 178;
-  const totalAcq = ASSET_CATEGORIES.reduce((a,r)=>a+r.acqValue,0);
-  const totalDep = ASSET_CATEGORIES.reduce((a,r)=>a+r.accumDep,0);
+  const categories = assetCategoryData();
+  const acBatchData = assetAcBatchData();
+  const vehicleMonthly = assetVehicleMonthlyData();
+  const isLive = !!liveAssetAnalysis();
+
+  const totalAssets = categories.reduce((a,r)=>a+r.assets,0);
+  const totalAcq = categories.reduce((a,r)=>a+r.acqValue,0);
+  const totalDep = categories.reduce((a,r)=>a+r.accumDep,0);
   const netBookValue = totalAcq - totalDep;
-  const systemBookValue = 10025265.05;
+  const systemBookValue = isLive ? categories.reduce((a,r)=>a+(r.systemBookValue||0),0) : 10025265.05;
   const overstated = systemBookValue - netBookValue;
 
-  const catRows = ASSET_CATEGORIES.map(c=>{
+  const catRows = categories.map(c=>{
     const pct = (c.accumDep/c.acqValue*100).toFixed(1);
     return `<tr><td>${c.category}</td><td>${c.assets}</td><td>${fmt(c.acqValue)}</td><td>${fmt(c.accumDep)}</td><td>${pct}%</td></tr>`;
   }).join('');
 
-  const vehicleRows = VEHICLE_MONTHLY_DEP.map(r=>`<tr><td>${r.period}</td><td class="${r.total===0?'neg':''}">${fmt(r.total)}</td><td>${r.note}</td></tr>`).join('');
-  const vehicleChartRows = VEHICLE_MONTHLY_DEP.map(r=>({period:r.period, total:r.total||1}));
+  const vehicleRows = vehicleMonthly.map(r=>`<tr><td>${r.period}</td><td class="${r.total===0?'neg':''}">${fmt(r.total)}</td><td>${r.note}</td></tr>`).join('');
+  const vehicleChartRows = vehicleMonthly.map(r=>({period:r.period, total:r.total||1}));
 
-  const acRows = AC_BATCH.map(a=>`<tr><td>${a.name}</td><td>${a.qty}</td><td>${fmt(a.acqEach)}</td><td>${a.lifeYears===1?'1 year':'normal (default)'}</td><td class="${a.annualRatePct>50?'neg':''}">${a.annualRatePct.toFixed(1)}%/yr</td></tr>`).join('');
-  const anomalousQty = AC_BATCH.filter(a=>a.annualRatePct>50).reduce((s,a)=>s+a.qty,0);
-  const anomalousValue = AC_BATCH.filter(a=>a.annualRatePct>50).reduce((s,a)=>s+a.qty*a.acqEach,0);
+  const acRows = acBatchData.map(a=>`<tr><td>${a.name}</td><td>${a.qty}</td><td>${fmt(a.acqEach)}</td><td>${a.lifeYears===1?'1 year':'normal (default)'}</td><td class="${a.annualRatePct>50?'neg':''}">${a.annualRatePct.toFixed(1)}%/yr</td></tr>`).join('');
+  const anomalousQty = acBatchData.filter(a=>a.annualRatePct>50).reduce((s,a)=>s+a.qty,0);
+  const anomalousValue = acBatchData.filter(a=>a.annualRatePct>50).reduce((s,a)=>s+a.qty*a.acqEach,0);
   const normalRatePct = 15.0;
   const overDepEstimate = anomalousValue * ((100-normalRatePct)/100);
 
@@ -950,12 +1003,12 @@ function renderGroup15(){
     <div class="pagehead">
       <span class="eyebrow">Finance · XI</span>
       <h1>Fixed Asset &amp; Depreciation Analysis</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · ast.tblAsset + ast.tblAssetDepreciationRow, verified live</div>
+      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · ast.tblAsset + ast.tblAssetDepreciationRow, ${isLive?'live':'static snapshot'}</div>
     </div>
 
     <div class="callout ok">
       <span class="tag">Data integrity — passed</span>
-      <p>178 assets, joined at the individual-asset level between the fixed asset register and the transaction-level depreciation ledger. Every category total below was independently re-summed and reconciles exactly to the portfolio total — no rounding gap.</p>
+      <p>${totalAssets} assets, joined at the individual-asset level between the fixed asset register and the transaction-level depreciation ledger. Every category total below was independently re-summed and reconciles exactly to the portfolio total — no rounding gap.</p>
     </div>
 
     <div class="kpi-row">
@@ -971,7 +1024,7 @@ function renderGroup15(){
       ${catRows}
       <tr class="fy-row"><td>Total</td><td>${totalAssets}</td><td>${fmt(totalAcq)}</td><td>${fmt(totalDep)}</td><td>${(totalDep/totalAcq*100).toFixed(1)}%</td></tr>
     </table></div>
-    <div class="chartwrap">${renderAssetBarChart(ASSET_CATEGORIES.map(c=>({...c, pct: c.accumDep/c.acqValue*100})), 'accumDep', 'category')}</div>
+    <div class="chartwrap">${renderAssetBarChart(categories.map(c=>({...c, pct: c.accumDep/c.acqValue*100})), 'accumDep', 'category')}</div>
 
     <div class="section-title">Problem 1: The System's "Book Value" Field Is Broken</div>
     <div class="callout warn">
@@ -1000,7 +1053,7 @@ function renderGroup15(){
     <div class="tablewrap"><table>
       <tr><th>Period</th><th>Combined Monthly Depreciation (2 vehicles)</th><th>Note</th></tr>
       ${vehicleRows}
-      <tr class="fy-row"><td>Total</td><td>${fmt(VEHICLE_MONTHLY_DEP.reduce((a,r)=>a+r.total,0))}</td><td></td></tr>
+      <tr class="fy-row"><td>Total</td><td>${fmt(vehicleMonthly.reduce((a,r)=>a+r.total,0))}</td><td></td></tr>
     </table></div>
 
     <div class="section-title">Bonus: Category Mislabeling</div>
