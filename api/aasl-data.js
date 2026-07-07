@@ -102,7 +102,7 @@ module.exports = async (req, res) => {
       FROM fin.tblAccountingJournal
       WHERE intBusinessUnitId = @bu AND isActive = 1 AND dteTransactionDate >= DATEADD(year,-1,GETDATE())
       GROUP BY COALESCE(NULLIF(strCostRevenueName,''),'(Unassigned)')
-      ORDER BY revenue + expense DESC`);
+      ORDER BY 2 + 3 DESC`);
 
     const vendors = await run(pool, `
       SELECT TOP 15 strPartnerName AS partner, SUM(monTotalAmount) AS amount, COUNT(*) AS cnt
