@@ -148,19 +148,17 @@
 const romans = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII"];
 const groups = [
   {id:1, roman:"I", title:"Income Statement — Trend & Structure", status:"done", segment:"Segment 1 — Finance"},
-  {id:2, roman:"II", title:"Balance Sheet & Cash Flow (derived)", status:"done", segment:"Segment 1 — Finance"},
-  {id:3, roman:"III", title:"Profitability Analysis", status:"done", segment:"Segment 1 — Finance"},
-  {id:4, roman:"IV", title:"Liquidity Analysis", status:"done", segment:"Segment 1 — Finance"},
-  {id:5, roman:"V", title:"Leverage & Solvency", status:"done", segment:"Segment 1 — Finance"},
-  {id:6, roman:"VI", title:"Efficiency Analysis", status:"done", segment:"Segment 1 — Finance"},
-  {id:7, roman:"VII", title:"Cost Structure & Drivers", status:"done", segment:"Segment 1 — Finance"},
-  {id:8, roman:"VIII", title:"Related-Party / Governance", status:"done", segment:"Segment 1 — Finance"},
-  {id:9, roman:"IX", title:"Tax Analysis", status:"done", segment:"Segment 1 — Finance"},
-  {id:10, roman:"X", title:"Quality of Earnings", status:"done", segment:"Segment 1 — Finance"},
-  {id:11, roman:"XI", title:"Trend & Time-Series Diagnostics", status:"done", segment:"Segment 1 — Finance"},
-  {id:12, roman:"XII", title:"Red Flag / Forensic Scan", status:"done", segment:"Segment 1 — Finance"},
-  {id:13, roman:"XIII", title:"Competitive Landscape & Segment Strategy", status:"done", segment:"Segment 2 — Growth Strategy"},
-  {id:14, roman:"XIV", title:"Website Audit: akijair.com", status:"done", segment:"Segment 2 — Growth Strategy"},
+  {id:3, roman:"II", title:"Profitability Analysis", status:"done", segment:"Segment 1 — Finance"},
+  {id:4, roman:"III", title:"Liquidity Analysis", status:"done", segment:"Segment 1 — Finance"},
+  {id:5, roman:"IV", title:"Leverage & Solvency", status:"done", segment:"Segment 1 — Finance"},
+  {id:7, roman:"V", title:"Cost Structure & Drivers", status:"done", segment:"Segment 1 — Finance"},
+  {id:8, roman:"VI", title:"Related-Party / Governance", status:"done", segment:"Segment 1 — Finance"},
+  {id:9, roman:"VII", title:"Tax Analysis", status:"done", segment:"Segment 1 — Finance"},
+  {id:10, roman:"VIII", title:"Quality of Earnings", status:"done", segment:"Segment 1 — Finance"},
+  {id:11, roman:"IX", title:"Trend & Time-Series Diagnostics", status:"done", segment:"Segment 1 — Finance"},
+  {id:12, roman:"X", title:"Red Flag / Forensic Scan", status:"done", segment:"Segment 1 — Finance"},
+  {id:13, roman:"XI", title:"Competitive Landscape & Segment Strategy", status:"done", segment:"Segment 2 — Growth Strategy"},
+  {id:14, roman:"XII", title:"Website Audit: akijair.com", status:"done", segment:"Segment 2 — Growth Strategy"},
 ];
 
 const FALLBACK_MONTHLY = [{"period": "2024-02", "clean_revenue": 14536, "wallet_mechanic": 33989.0, "total_expense": 0, "other_income": 0, "net_result": 14536, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-03", "clean_revenue": -23320.0, "wallet_mechanic": 0, "total_expense": 0, "other_income": 0, "net_result": -23320.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-04", "clean_revenue": -38443.0, "wallet_mechanic": 1098709.0, "total_expense": 0, "other_income": 0, "net_result": -38443.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-05", "clean_revenue": 100582, "wallet_mechanic": 249002.0, "total_expense": 0, "other_income": 0, "net_result": 100582, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-06", "clean_revenue": -101622.0, "wallet_mechanic": 166539, "total_expense": 0, "other_income": 0, "net_result": -101622.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-07", "clean_revenue": 23160.0, "wallet_mechanic": 366259, "total_expense": 0, "other_income": 0, "net_result": 23160.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-08", "clean_revenue": -3598.0, "wallet_mechanic": 28080, "total_expense": 0, "other_income": 0, "net_result": -3598.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-09", "clean_revenue": -78301.0, "wallet_mechanic": 273570.0, "total_expense": 0, "other_income": 0, "net_result": -78301.0, "selling": 0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-10", "clean_revenue": -353823.0, "wallet_mechanic": 662828, "total_expense": 86686.0, "other_income": 0, "net_result": -440509.0, "selling": 86686.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-11", "clean_revenue": -2689961.0, "wallet_mechanic": 1059687.0, "total_expense": 1038652.0, "other_income": 0, "net_result": -3728613.0, "selling": 1038652.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2024-12", "clean_revenue": -573190.0, "wallet_mechanic": 625923.0, "total_expense": 511368.0, "other_income": 0, "net_result": -1084558.0, "selling": 511368.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-01", "clean_revenue": 2755100.0, "wallet_mechanic": 6139568.0, "total_expense": 1069910.0, "other_income": 0, "net_result": 1685190.0, "selling": 1069910.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-02", "clean_revenue": -3219579.0, "wallet_mechanic": 7295740.0, "total_expense": 1867862.0, "other_income": 0, "net_result": -5087441.0, "selling": 1867862.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-03", "clean_revenue": -1515845.0, "wallet_mechanic": 5222496.0, "total_expense": 2903809.0, "other_income": 0, "net_result": -4419655.0, "selling": 2903809.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-04", "clean_revenue": -2801543.0, "wallet_mechanic": 5294111.0, "total_expense": 2982196.0, "other_income": 0, "net_result": -5783739.0, "selling": 2982196.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-05", "clean_revenue": 9684900.0, "wallet_mechanic": 7572531.0, "total_expense": 5301018.0, "other_income": 0, "net_result": 4383881.0, "selling": 5301018.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-06", "clean_revenue": 7174672.0, "wallet_mechanic": 13664718.0, "total_expense": 8918856.0, "other_income": 0, "net_result": -1744184.0, "selling": 8918856.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-07", "clean_revenue": 12641567.0, "wallet_mechanic": 18285502.0, "total_expense": 26131283.0, "other_income": 0, "net_result": -13489716.0, "selling": 26131283.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-08", "clean_revenue": 8914317.0, "wallet_mechanic": 43203159.0, "total_expense": 20161573.0, "other_income": 0, "net_result": -11247256.0, "selling": 20161573.0, "admin": 0, "operating": 0, "financial": 0, "depreciation": 0, "marketing": 0}, {"period": "2025-09", "clean_revenue": -9252874.0, "wallet_mechanic": -49862940.0, "total_expense": 15038673.0, "other_income": 0, "net_result": -24291548.0, "selling": 15026757.0, "admin": 0, "operating": 0, "financial": 11917.0, "depreciation": 0, "marketing": 0}, {"period": "2025-10", "clean_revenue": -12691926.0, "wallet_mechanic": 24712196.0, "total_expense": 13813995.0, "other_income": 0, "net_result": -26505921.0, "selling": 13801681.0, "admin": 0, "operating": 0, "financial": 12314.0, "depreciation": 0, "marketing": 0}, {"period": "2025-11", "clean_revenue": -18231059.0, "wallet_mechanic": 32611029.0, "total_expense": 13469507.0, "other_income": 0, "net_result": -31700566.0, "selling": 13457590.0, "admin": 0, "operating": 0, "financial": 11917.0, "depreciation": 0, "marketing": 0}, {"period": "2025-12", "clean_revenue": -28687953.0, "wallet_mechanic": 18856165.0, "total_expense": 16556492.0, "other_income": 0, "net_result": -45244445.0, "selling": 15186524.0, "admin": 520340.0, "operating": 0, "financial": 849629.0, "depreciation": 0, "marketing": 0}, {"period": "2026-01", "clean_revenue": 13081468.0, "wallet_mechanic": -12212825.0, "total_expense": 7319210.0, "other_income": 0, "net_result": 5762257.0, "selling": 3009026.0, "admin": 1352962.0, "operating": 2342788.0, "financial": 402314.0, "depreciation": 212121.0, "marketing": 0}, {"period": "2026-02", "clean_revenue": -7049571.0, "wallet_mechanic": -17186271.0, "total_expense": 13265496.0, "other_income": 402580.0, "net_result": -19912488.0, "selling": 1936954.0, "admin": 3238291.0, "operating": 7115811.0, "financial": 762318.0, "depreciation": 212121.0, "marketing": 0}, {"period": "2026-03", "clean_revenue": -6754738.0, "wallet_mechanic": 6456577.0, "total_expense": 14073728.0, "other_income": 27494.0, "net_result": -20800972.0, "selling": 2917948.0, "admin": 3208148.0, "operating": 6803451.0, "financial": 909332.0, "depreciation": 234849.0, "marketing": 0}, {"period": "2026-04", "clean_revenue": -6974080.0, "wallet_mechanic": -8397862.0, "total_expense": 12611471.0, "other_income": 472736.0, "net_result": -19112816.0, "selling": 1894912.0, "admin": 1557801.0, "operating": 7045952.0, "financial": 1885533.0, "depreciation": 227273.0, "marketing": 0}, {"period": "2026-05", "clean_revenue": -4378517.0, "wallet_mechanic": -15727942.0, "total_expense": 14954472.0, "other_income": 1975617.0, "net_result": -17357371.0, "selling": 5004132.0, "admin": 3318447.0, "operating": 5381017.0, "financial": 1016028.0, "depreciation": 234849.0, "marketing": 0}, {"period": "2026-06", "clean_revenue": -3970616.0, "wallet_mechanic": -5961248.0, "total_expense": 21982923.0, "other_income": 561891.0, "net_result": -25391648.0, "selling": 4892640.0, "admin": 1604061.0, "operating": 14123205.0, "financial": 1084679.0, "depreciation": 227273.0, "marketing": 51066.0}, {"period": "2026-07", "clean_revenue": -701561.0, "wallet_mechanic": -5732174, "total_expense": 7578521.0, "other_income": 149.0, "net_result": -8279933.0, "selling": 4309841.0, "admin": 386562.0, "operating": 1475229.0, "financial": 185188.0, "depreciation": 37879.0, "marketing": 1183821.0}];
@@ -489,32 +487,6 @@ function renderGroup1(){
   `;
 }
 
-function renderGroup2(){
-  const cf = (LIVE && LIVE.budget && LIVE.budget.projectedCashFlow) || {cnt:2148, minDate:'2026-01-01', maxDate:'2026-03-14'};
-  const bsRows = (LIVE && LIVE.budget) ? LIVE.budget.balanceSheetBudgetRows : 0;
-  const tbRows = (LIVE && LIVE.budget) ? LIVE.budget.trialBalanceBudgetRows : 0;
-
-  document.getElementById('main').innerHTML = `
-    <div class="pagehead">
-      <span class="eyebrow">Finance · II</span>
-      <h1>Balance Sheet &amp; Cash Flow (derived)</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
-    </div>
-
-    <div class="callout warn">
-      <span class="tag">Not computable</span>
-      <p>No Balance Sheet budget exists for this entity — <span class="mono">bgt.tblBudgetBalanceSheetHeader</span> has ${bsRows} rows for BU-245, and <span class="mono">bgt.tblBudgetTrialBalance</span> has ${tbRows} rows (both checked live). No Cash Flow budget table exists in the schema tied to this Income Statement budget either. An actuals-based reconstruction was attempted separately and abandoned — the ledger's GL naming conflates refunds/agent top-ups with gross revenue, making a derived BS/CF unreliable without accounting-team input on netting logic.</p>
-    </div>
-
-    <div class="callout">
-      <span class="tag">Partial exception — a different planning tool exists</span>
-      <p>A separate operational forecast, <span class="mono">fin.tblProjectedCashFlowDailyHistory</span>, does hold real AASL data — ${cf.cnt} rows spanning ${cf.minDate ? String(cf.minDate).slice(0,10) : 'n/a'} to ${cf.maxDate ? String(cf.maxDate).slice(0,10) : 'n/a'} (checked live). This is a day-to-day cash planning tool on a different horizon than the FY ${budgetMeta().fiscalYear} IS budget, not an integrated Cash Flow Statement — it can't be substituted for one, but it means AASL isn't entirely without cash visibility, just without a formal CF statement.</p>
-    </div>
-
-    <p class="footnote">Source: bgt.tblBudgetBalanceSheetHeader, bgt.tblBudgetTrialBalance, fin.tblProjectedCashFlowDailyHistory, iBOSDDD, BU-245 — checked live on each page load.</p>
-  `;
-}
-
 function renderGroup3(){
   const rows = budgetMonthly();
   const revenue = budgetSum(rows,'revenue');
@@ -526,7 +498,7 @@ function renderGroup3(){
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Finance · III</span>
+      <span class="eyebrow">Finance · II</span>
       <h1>Profitability Analysis</h1>
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
@@ -541,7 +513,7 @@ function renderGroup3(){
 
     <div class="callout ${ebit>=0?'ok':'warn'}">
       <span class="tag">Critical distinction</span>
-      <p>Operationally the business is ${ebit>=0?'marginally profitable':'operating at a loss'} (EBIT margin ${(ebit/revenue*100).toFixed(2)}%) — ${netIncome<0 && ebit>=0 ? 'the bottom-line loss is entirely a function of financing cost, not operations.' : ''} This is a critical distinction: an operating view says one thing; a bottom-line view (after the intercompany interest charge — see Group VIII) says another. Which one matters depends on whether that intercompany loan is permanent capital structure or a temporary funding bridge.</p>
+      <p>Operationally the business is ${ebit>=0?'marginally profitable':'operating at a loss'} (EBIT margin ${(ebit/revenue*100).toFixed(2)}%) — ${netIncome<0 && ebit>=0 ? 'the bottom-line loss is entirely a function of financing cost, not operations.' : ''} This is a critical distinction: an operating view says one thing; a bottom-line view (after the intercompany interest charge — see Group VI) says another. Which one matters depends on whether that intercompany loan is permanent capital structure or a temporary funding bridge.</p>
     </div>
 
     <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
@@ -551,17 +523,17 @@ function renderGroup3(){
 function renderGroup4(){
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Finance · IV</span>
+      <span class="eyebrow">Finance · III</span>
       <h1>Liquidity Analysis</h1>
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
     </div>
 
     <div class="callout warn">
       <span class="tag">Not computable</span>
-      <p>Liquidity ratios (current ratio, quick ratio, cash conversion cycle) require Balance Sheet data (current assets/liabilities) that doesn't exist for this entity's budget (see Group II). No proxy is meaningful here — Income Statement data alone says nothing about working capital position, and fabricating one would be false precision.</p>
+      <p>Liquidity ratios (current ratio, quick ratio, cash conversion cycle) require Balance Sheet data (current assets/liabilities) that doesn't exist for this entity's budget — no Balance Sheet or Trial Balance budget has ever been filed for BU-245. No proxy is meaningful here — Income Statement data alone says nothing about working capital position, and fabricating one would be false precision.</p>
     </div>
 
-    <p class="footnote">Blocked by: no Balance Sheet budget for BU-245 (Group II).</p>
+    <p class="footnote">Blocked by: no Balance Sheet or Trial Balance budget exists for BU-245 (checked live against bgt.tblBudgetBalanceSheetHeader and bgt.tblBudgetTrialBalance).</p>
   `;
 }
 
@@ -573,7 +545,7 @@ function renderGroup5(){
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Finance · V</span>
+      <span class="eyebrow">Finance · IV</span>
       <h1>Leverage &amp; Solvency Analysis</h1>
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
@@ -585,27 +557,10 @@ function renderGroup5(){
 
     <div class="callout warn">
       <span class="tag">Solvency red flag</span>
-      <p>An interest coverage ratio ${coverage!==null && coverage<1 ? 'below 1.0x is a solvency red flag on its own' : 'is shown here'} — operating earnings cover only ${coverage!==null ? (coverage*100).toFixed(0) : 'n/a'}% of the interest bill. Combined with the fact this interest is <b>100% intercompany</b> (verified live — see Group VIII), this reads less like external credit risk and more like a related-party funding structure absorbing the entity's operating shortfall.</p>
+      <p>An interest coverage ratio ${coverage!==null && coverage<1 ? 'below 1.0x is a solvency red flag on its own' : 'is shown here'} — operating earnings cover only ${coverage!==null ? (coverage*100).toFixed(0) : 'n/a'}% of the interest bill. Combined with the fact this interest is <b>100% intercompany</b> (verified live — see Group VI), this reads less like external credit risk and more like a related-party funding structure absorbing the entity's operating shortfall.</p>
     </div>
 
-    <p class="footnote">True leverage ratios (Debt/Equity) need Balance Sheet data, unavailable — see Group II. Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245.</p>
-  `;
-}
-
-function renderGroup6(){
-  document.getElementById('main').innerHTML = `
-    <div class="pagehead">
-      <span class="eyebrow">Finance · VI</span>
-      <h1>Efficiency Analysis</h1>
-      <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
-    </div>
-
-    <div class="callout warn">
-      <span class="tag">Not computable</span>
-      <p>Asset turnover, receivables turnover, and payables days all require Balance Sheet asset/liability bases that don't exist for this entity's budget (see Group II). No reliable proxy exists from Income Statement data alone.</p>
-    </div>
-
-    <p class="footnote">Blocked by: no Balance Sheet budget for BU-245 (Group II).</p>
+    <p class="footnote">True leverage ratios (Debt/Equity) need Balance Sheet data, unavailable for this entity. Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245.</p>
   `;
 }
 
@@ -633,7 +588,7 @@ function renderGroup7(){
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Finance · VII</span>
+      <span class="eyebrow">Finance · V</span>
       <h1>Cost Structure &amp; Driver Analysis</h1>
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
@@ -661,7 +616,7 @@ function renderGroup7(){
 function renderGroup8(){
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Finance · VIII</span>
+      <span class="eyebrow">Finance · VI</span>
       <h1>Related-Party / Governance Analysis</h1>
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
@@ -669,7 +624,7 @@ function renderGroup8(){
     <div class="callout warn">
       <span class="tag">Flag — 100% of Financial Expense is intercompany</span>
       <p>Verified directly against the sub-ledger: the entire Financial Expenses budget line (sub-GL <span class="mono">21906</span>) is literally named <b>"Inter Company Interest Expense"</b> — there is no third-party bank debt sub-GL in this budget at all. This means:</p>
-      <p>The entity's entire financing cost is a related-party charge, set by whatever intercompany lending terms Akij Group/Resources has established internally — not an arm's-length market rate. Whether that rate/amount is appropriate, and whether it's what tips an operationally-profitable entity (Group III) into a net loss, is exactly the kind of line a related-party disclosure review should examine.</p>
+      <p>The entity's entire financing cost is a related-party charge, set by whatever intercompany lending terms Akij Group/Resources has established internally — not an arm's-length market rate. Whether that rate/amount is appropriate, and whether it's what tips an operationally-profitable entity (Group II) into a net loss, is exactly the kind of line a related-party disclosure review should examine.</p>
     </div>
 
     <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow joined to fin.tblAccountingJournal for sub-GL naming, iBOSDDD, BU-245 — verified live.</p>
@@ -686,7 +641,7 @@ function renderGroup9(){
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Finance · IX</span>
+      <span class="eyebrow">Finance · VII</span>
       <h1>Tax Analysis</h1>
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
@@ -724,7 +679,7 @@ function renderGroup10(){
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Finance · X</span>
+      <span class="eyebrow">Finance · VIII</span>
       <h1>Quality of Earnings</h1>
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · Quality of the <b>budgeting process</b>, not actuals</div>
     </div>
@@ -762,7 +717,7 @@ function renderGroup11(){
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Finance · XI</span>
+      <span class="eyebrow">Finance · IX</span>
       <h1>Trend &amp; Time-Series Diagnostics</h1>
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
@@ -778,7 +733,7 @@ function renderGroup11(){
 
     <div class="callout">
       <span class="tag">Finding</span>
-      <p>Revenue has a clear bimodal seasonal pattern (H1 running ${(h1avg/h2avg*100-100).toFixed(0)}% above H2); costs have none (Group X). This mismatch is the primary driver of monthly margin volatility, not any underlying cost inefficiency. Commission ratio is mechanically stable (${(commStats.cov*100).toFixed(1)}% CoV) since it's a near-fixed percentage of revenue.</p>
+      <p>Revenue has a clear bimodal seasonal pattern (H1 running ${(h1avg/h2avg*100-100).toFixed(0)}% above H2); costs have none (Group VIII). This mismatch is the primary driver of monthly margin volatility, not any underlying cost inefficiency. Commission ratio is mechanically stable (${(commStats.cov*100).toFixed(1)}% CoV) since it's a near-fixed percentage of revenue.</p>
     </div>
 
     <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
@@ -799,19 +754,19 @@ function renderGroup12(){
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Finance · XII</span>
+      <span class="eyebrow">Finance · X</span>
       <h1>Red Flag / Forensic Scan</h1>
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245 · FY ${budgetMeta().fiscalYear} Budget</div>
     </div>
 
     <div class="tablewrap"><table>
-      <tr><th>#</th><th>Red Flag</th></tr>
-      <tr><td>1</td><td>Perfectly flat, non-seasonal fixed costs across all 12 months (Group X) — suggests top-down annual-run-rate budgeting rather than granular operational planning.</td></tr>
-      <tr><td>2</td><td>100% related-party interest expense (Group VIII) — verified, no third-party financing in this budget at all. Concentration and governance risk.</td></tr>
-      <tr><td>3</td><td>Interest coverage of ${coverage!==null ? coverage.toFixed(2)+'x' : 'n/a'} (Group V) — the entity cannot cover its budgeted financing cost from operations, before any downside scenario is applied.</td></tr>
-      <tr><td>4</td><td>Tax expense sits in a tight ${'~0.04%'} of-revenue band (Group IX) — reframed from "placeholder" to "likely a turnover-based minimum tax," but still worth confirming with the tax team.</td></tr>
-      <tr><td>5</td><td>Budgeted revenue (${fmt(revenue)}) sits below the calculated breakeven point (~${breakeven?fmt(breakeven):'n/a'}) — meaning even before any adverse variance, the budget itself is not breakeven-achieving.</td></tr>
-      <tr><td>6</td><td>No COGS line for what is fundamentally a ticketing/travel agency cost business — all cost is bucketed into SG&amp;A-style overheads (Selling/Marketing/Admin) rather than a distinct cost-of-service line, limiting visibility into true unit economics per ticket/booking.</td></tr>
+      <tr><th style="text-align:left;">#</th><th style="text-align:left;">Red Flag</th></tr>
+      <tr><td>1</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">Perfectly flat, non-seasonal fixed costs across all 12 months (Group VIII) — suggests top-down annual-run-rate budgeting rather than granular operational planning.</td></tr>
+      <tr><td>2</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">100% related-party interest expense (Group VI) — verified, no third-party financing in this budget at all. Concentration and governance risk.</td></tr>
+      <tr><td>3</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">Interest coverage of ${coverage!==null ? coverage.toFixed(2)+'x' : 'n/a'} (Group IV) — the entity cannot cover its budgeted financing cost from operations, before any downside scenario is applied.</td></tr>
+      <tr><td>4</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">Tax expense sits in a tight ${'~0.04%'} of-revenue band (Group VII) — reframed from "placeholder" to "likely a turnover-based minimum tax," but still worth confirming with the tax team.</td></tr>
+      <tr><td>5</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">Budgeted revenue (${fmt(revenue)}) sits below the calculated breakeven point (~${breakeven?fmt(breakeven):'n/a'}) — meaning even before any adverse variance, the budget itself is not breakeven-achieving.</td></tr>
+      <tr><td>6</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">No COGS line for what is fundamentally a ticketing/travel agency cost business — all cost is bucketed into SG&amp;A-style overheads (Selling/Marketing/Admin) rather than a distinct cost-of-service line, limiting visibility into true unit economics per ticket/booking.</td></tr>
     </table></div>
 
     <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live. Breakeven = Fixed Costs ÷ (1 − Commission Ratio − Tax Ratio), all computed live from the current budget.</p>
@@ -925,7 +880,7 @@ function renderAttackChart(){
 function renderGroup13(){
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Growth Strategy · XIII</span>
+      <span class="eyebrow">Growth Strategy · XI</span>
       <h1>Competitive Landscape &amp; Segment Strategy</h1>
       <div class="entity">Akij Air Service Ltd. (AASL) vs. ShareTrip, GoZayaan, Amy, Triplover</div>
     </div>
@@ -952,7 +907,7 @@ function renderGroup13(){
     <div class="section-title">Segment Strategy: B2B — Agent Network</div>
     <div class="callout ok">
       <span class="tag">Where AASL stands</span>
-      <p>This is AASL's proven segment — live ledger data (Group III) shows the B2B-tagged segment net +33.1M while the rest of the book is unprofitable. The gap is infrastructure: ShareTrip, Amy, and BDFare/IV Trip-style platforms run self-serve digital B2B portals with real-time fares and online agent credit; AASL's own data shows most activity still sits in an "(Unassigned)" bucket, suggesting manual/legacy processing rather than a proper platform.</p>
+      <p>This is AASL's proven segment — live ledger data (Group II) shows the B2B-tagged segment net +33.1M while the rest of the book is unprofitable. The gap is infrastructure: ShareTrip, Amy, and BDFare/IV Trip-style platforms run self-serve digital B2B portals with real-time fares and online agent credit; AASL's own data shows most activity still sits in an "(Unassigned)" bucket, suggesting manual/legacy processing rather than a proper platform.</p>
     </div>
     <p style="font-size:14px; color:#DCE3EC; line-height:1.6;"><b>Recommended moves:</b> (1) Build or license a self-serve B2B portal — real-time GDS/NDC fares, online credit-limit management, agent self-onboarding — matching what ShareTrip and dedicated B2B vendors (BDFare, IV Trip, goFLY) already offer. (2) Use Akij Air's own retail/distribution footprint to recruit a captive agent base that independent OTAs can't easily reach. (3) Fix the segment-tagging gap first (Group III finding) — you can't defend a segment you can't measure.</p>
 
@@ -1054,14 +1009,14 @@ function renderAuditChart(){
 function renderGroup14(){
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
-      <span class="eyebrow">Growth Strategy · XIV</span>
+      <span class="eyebrow">Growth Strategy · XII</span>
       <h1>Website Audit: akijair.com</h1>
       <div class="entity">Measured live against ShareTrip, GoZayaan, Amy, Triplover · 2026-07-06</div>
     </div>
 
     <div class="callout">
       <span class="tag">Methodology</span>
-      <p>Every finding below was measured directly against the live homepages (HTTP headers, page source, response size/timing via curl and a full page fetch) on 2026-07-06 — not a generic checklist. Scores (0–5 per dimension) combine what was actually measured; where competitor internals couldn't be verified the same way (e.g. booking-engine breadth), the score is drawn from the public research already compiled in Group XIII, not fabricated.</p>
+      <p>Every finding below was measured directly against the live homepages (HTTP headers, page source, response size/timing via curl and a full page fetch) on 2026-07-06 — not a generic checklist. Scores (0–5 per dimension) combine what was actually measured; where competitor internals couldn't be verified the same way (e.g. booking-engine breadth), the score is drawn from the public research already compiled in Group XI, not fabricated.</p>
     </div>
 
     <div class="kpi-row">
@@ -1113,12 +1068,12 @@ function renderGroup14(){
     <div class="section-title">Trust Signals</div>
     <div class="callout warn">
       <span class="tag">Finding</span>
-      <p>No IATA, ATAB, or TOAB certification badge is visibly displayed on the akijair.com homepage. This is notable because AASL's own financial ledger (Group X) shows real IATA BSP settlement activity — meaning the credential likely exists operationally but isn't being used as a trust signal on the public site, unlike Amy which explicitly markets its IATA/ATAB/TOAB recognition.</p>
+      <p>No IATA, ATAB, or TOAB certification badge is visibly displayed on the akijair.com homepage. This is notable because AASL's own financial ledger (Group VIII) shows real IATA BSP settlement activity — meaning the credential likely exists operationally but isn't being used as a trust signal on the public site, unlike Amy which explicitly markets its IATA/ATAB/TOAB recognition.</p>
     </div>
     <p style="font-size:14px; color:#DCE3EC; line-height:1.6;"><b>Fix:</b> If AASL holds IATA/ATAB/TOAB accreditation (confirm with the operations team), display it prominently — a logo badge near the booking form and in the footer is a low-cost, high-trust conversion signal that most competitors also under-utilize.</p>
 
     <p class="footnote">
-      Method: HTTP response headers and page source fetched directly from akijair.com, sharetrip.net, gozayaan.com, amybd.com, and triplover.com on 2026-07-06 via curl and a full page render. Booking-engine breadth scores are drawn from the public competitor research in Group XIII. GoZayaan's homepage document (10.5 KB) is a thin client-rendered shell — its real payload weight likely shifts to JavaScript bundles loaded after initial paint, so its "weight" score reflects only the initial HTML document, not full page weight.
+      Method: HTTP response headers and page source fetched directly from akijair.com, sharetrip.net, gozayaan.com, amybd.com, and triplover.com on 2026-07-06 via curl and a full page render. Booking-engine breadth scores are drawn from the public competitor research in Group XI. GoZayaan's homepage document (10.5 KB) is a thin client-rendered shell — its real payload weight likely shifts to JavaScript bundles loaded after initial paint, so its "weight" score reflects only the initial HTML document, not full page weight.
     </p>
   `;
 }
@@ -1211,11 +1166,9 @@ function go(id){
   currentGroupId = id;
   renderNav(id);
   if(id===1) renderGroup1();
-  if(id===2) renderGroup2();
   if(id===3) renderGroup3();
   if(id===4) renderGroup4();
   if(id===5) renderGroup5();
-  if(id===6) renderGroup6();
   if(id===7) renderGroup7();
   if(id===8) renderGroup8();
   if(id===9) renderGroup9();
