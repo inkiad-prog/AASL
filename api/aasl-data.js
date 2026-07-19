@@ -39,9 +39,15 @@ async function run(pool, query, params) {
   return result.recordset;
 }
 
+// Verified once (2026-07) directly against the sub-ledger: sub-GL 21906 is named
+// "Inter Company Interest Expense". Used to detect live whether Financial Expenses
+// is still 100% intercompany, or whether a third-party (e.g. bank) sub-GL has appeared.
+const INTERCOMPANY_INTEREST_SUBGL_ID = '21906';
+
 function aggregateBudgetMonthly(rawRows) {
   const byMonth = {};
   const sellingSubGlSeries = {};
+  const financialSubGlTotals = {};
   rawRows.forEach((r) => {
     const m = r.month;
     byMonth[m] = byMonth[m] || { month: m, revenue: 0, admin: 0, marketing: 0, depreciation: 0, financial: 0, tax: 0 };
@@ -50,7 +56,11 @@ function aggregateBudgetMonthly(rawRows) {
     else if (r.gl === 'Administrative Expenses') byMonth[m].admin += amt;
     else if (r.gl === 'Marketing Expenses') byMonth[m].marketing += amt;
     else if (r.gl && r.gl.indexOf('Depreciation') === 0) byMonth[m].depreciation += amt;
-    else if (r.gl === 'Financial Expenses') byMonth[m].financial += amt;
+    else if (r.gl === 'Financial Expenses') {
+      byMonth[m].financial += amt;
+      const key = String(r.subGlId);
+      financialSubGlTotals[key] = (financialSubGlTotals[key] || 0) + amt;
+    }
     else if (r.gl === 'Tax Expenses') byMonth[m].tax += amt;
     else if (r.gl === 'Selling Expenses') {
       const key = String(r.subGlId);
@@ -69,13 +79,26 @@ function aggregateBudgetMonthly(rawRows) {
       else sellingCommissionPerMonth[s.month] = (sellingCommissionPerMonth[s.month] || 0) + s.amount;
     });
   });
-  return Object.keys(byMonth)
+
+  const financialTotal = Object.values(financialSubGlTotals).reduce((a, v) => a + v, 0);
+  const intercompanyTotal = financialSubGlTotals[INTERCOMPANY_INTEREST_SUBGL_ID] || 0;
+  const otherSubGlIds = Object.keys(financialSubGlTotals).filter((k) => k !== INTERCOMPANY_INTEREST_SUBGL_ID);
+  const financialExpenseBreakdown = {
+    intercompanyAmount: intercompanyTotal,
+    otherAmount: financialTotal - intercompanyTotal,
+    intercompanyPct: financialTotal ? Math.abs(intercompanyTotal / financialTotal) * 100 : null,
+    hasOtherFinancingSource: otherSubGlIds.length > 0 && Math.abs(financialTotal - intercompanyTotal) > 0.01,
+  };
+
+  const monthly = Object.keys(byMonth)
     .map((m) => ({
       ...byMonth[m],
       sellingFixed: sellingFixedPerMonth[m] || 0,
       sellingCommission: sellingCommissionPerMonth[m] || 0,
     }))
     .sort((a, b) => a.month - b.month);
+
+  return { monthly, financialExpenseBreakdown };
 }
 
 module.exports = async (req, res) => {
@@ -255,6 +278,7 @@ module.exports = async (req, res) => {
     const budgetHeader = budgetHeaderRows[0] || null;
 
     let budgetMonthly = [];
+    let financialExpenseBreakdown = null;
     if (budgetHeader) {
       const rawBudgetRows = await run(pool, `
         SELECT r.intMonthId AS month, gl.strGeneralLedgerName AS gl, r.intSubGlId AS subGlId, r.numAmount AS amount
@@ -262,7 +286,9 @@ module.exports = async (req, res) => {
         JOIN fin.tblGeneralLedger gl ON gl.intGeneralLedgerId = r.intGeneralLedgerId
         WHERE r.intBudgetHeaderId = @budgetHeaderId`,
         { budgetHeaderId: { type: sql.BigInt, value: budgetHeader.id } });
-      budgetMonthly = aggregateBudgetMonthly(rawBudgetRows);
+      const aggregated = aggregateBudgetMonthly(rawBudgetRows);
+      budgetMonthly = aggregated.monthly;
+      financialExpenseBreakdown = aggregated.financialExpenseBreakdown;
     }
 
     const budgetBsRows = await run(pool, `SELECT COUNT(*) AS cnt FROM bgt.tblBudgetBalanceSheetHeader WHERE intBusinessUnitId = @bu`);
@@ -280,6 +306,7 @@ module.exports = async (req, res) => {
       budget: {
         header: budgetHeader,
         monthly: budgetMonthly,
+        financialExpenseBreakdown,
         balanceSheetBudgetRows: (budgetBsRows[0] || {}).cnt || 0,
         trialBalanceBudgetRows: (budgetTbRows[0] || {}).cnt || 0,
         projectedCashFlow: projCashFlowRows[0] || { cnt: 0, minDate: null, maxDate: null },

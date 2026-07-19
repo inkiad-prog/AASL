@@ -374,6 +374,19 @@ function budgetMonthly(){
 function budgetSum(rows, field){ return rows.reduce((a,r)=>a+num(r[field]),0); }
 function monthLabel(m){ return MONTH_LABELS[(m-1+12)%12]; }
 
+// Verified once (2026-07): the FY2026-27 budget's entire Financial Expenses line is
+// intercompany. Used as the offline default only — the live value re-checks this every load.
+const FALLBACK_FINANCIAL_EXPENSE_BREAKDOWN = { intercompanyAmount: -10800000, otherAmount: 0, intercompanyPct: 100, hasOtherFinancingSource: false };
+function financialExpenseBreakdown(){
+  return (LIVE && LIVE.budget && LIVE.budget.financialExpenseBreakdown) ? LIVE.budget.financialExpenseBreakdown : FALLBACK_FINANCIAL_EXPENSE_BREAKDOWN;
+}
+// No Balance Sheet/Trial Balance budget has ever been filed for BU-245 (verified live) — this
+// default reflects that; it flips automatically if either ever appears in the live response.
+function budgetBsTbRowCounts(){
+  const b = (LIVE && LIVE.budget) ? LIVE.budget : null;
+  return { bs: b ? (b.balanceSheetBudgetRows||0) : 0, tb: b ? (b.trialBalanceBudgetRows||0) : 0 };
+}
+
 function renderBudgetBarChart(rows, field, title){
   const w=1080, h=220, padL=50, padB=26, padT=10;
   const vals = rows.map(r=>r[field]);
@@ -429,6 +442,12 @@ function renderGroup1(){
   const ebt = ebit+financial;
   const netIncome = ebt+tax;
   const pct = (v)=> revenue ? (v/revenue*100).toFixed(2)+'%' : 'n/a';
+  const sellingPctOfRevenue = revenue ? Math.abs(selling)/revenue*100 : 0;
+  const structuralNote = sellingPctOfRevenue >= 60
+    ? `This is an agency/pass-through cost model — selling expenses alone consume ${sellingPctOfRevenue.toFixed(1)}% of revenue, meaning structural margin is thin from the outset regardless of scale.`
+    : sellingPctOfRevenue >= 35
+      ? `This is a cost-heavy service model — selling expenses consume ${sellingPctOfRevenue.toFixed(1)}% of revenue, leaving a moderate but not razor-thin structural margin.`
+      : `This is a comparatively lean cost structure — selling expenses consume only ${sellingPctOfRevenue.toFixed(1)}% of revenue, leaving more structural margin than a typical pass-through agency model.`;
 
   const lines = [
     ['Revenue', revenue],
@@ -473,7 +492,7 @@ function renderGroup1(){
 
     <div class="callout">
       <span class="tag">Structural note</span>
-      <p>This is an agency/pass-through cost model — selling expenses alone consume ${(Math.abs(selling)/revenue*100).toFixed(1)}% of revenue, meaning structural margin is thin from the outset regardless of scale.</p>
+      <p>${structuralNote}</p>
     </div>
 
     <div class="section-title">Monthly Net Income</div>
@@ -497,6 +516,22 @@ function renderGroup3(){
   const ebt = budgetSum(rows,'ebt');
   const netIncome = budgetSum(rows,'netIncome');
   const contribution = revenue ? ((revenue+commission)/revenue*100) : 0;
+  const ebitPct = revenue ? ebit/revenue*100 : 0;
+
+  let distinctionTag, distinctionText, distinctionOk;
+  if(ebit>=0 && netIncome>=0){
+    distinctionTag = 'Profitable at every level';
+    distinctionOk = true;
+    distinctionText = `The business is profitable both operationally and at the bottom line (EBIT margin ${ebitPct.toFixed(2)}%, Net margin ${(netIncome/revenue*100).toFixed(2)}%) — financing cost is a real expense but is not eroding the operating result into a loss.`;
+  } else if(ebit>=0 && netIncome<0){
+    distinctionTag = 'Critical distinction';
+    distinctionOk = false;
+    distinctionText = `Operationally the business is marginally profitable (EBIT margin ${ebitPct.toFixed(2)}%) — the bottom-line loss is entirely a function of financing cost, not operations. This is a critical distinction: an operating view says one thing; a bottom-line view (after the intercompany interest charge — see Group VI) says another. Which one matters depends on whether that intercompany loan is permanent capital structure or a temporary funding bridge.`;
+  } else {
+    distinctionTag = 'Deeper than a financing problem';
+    distinctionOk = false;
+    distinctionText = `The business is operating at a loss even before financing cost (EBIT margin ${ebitPct.toFixed(2)}%) — this is a more fundamental problem than the related-party interest charge discussed in Group VI, since even zero-cost financing wouldn't make this profitable.`;
+  }
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
@@ -508,14 +543,14 @@ function renderGroup3(){
     <div class="tablewrap"><table>
       <tr><th>Metric</th><th>Value</th></tr>
       <tr><td>Contribution Margin (revenue − commission only)</td><td>${contribution.toFixed(1)}%</td></tr>
-      <tr><td>EBIT Margin</td><td class="${cls(ebit)}">${(ebit/revenue*100).toFixed(2)}%</td></tr>
+      <tr><td>EBIT Margin</td><td class="${cls(ebit)}">${ebitPct.toFixed(2)}%</td></tr>
       <tr><td>EBT Margin</td><td class="${cls(ebt)}">${(ebt/revenue*100).toFixed(2)}%</td></tr>
       <tr><td>Net Margin</td><td class="${cls(netIncome)}">${(netIncome/revenue*100).toFixed(2)}%</td></tr>
     </table></div>
 
-    <div class="callout ${ebit>=0?'ok':'warn'}">
-      <span class="tag">Critical distinction</span>
-      <p>Operationally the business is ${ebit>=0?'marginally profitable':'operating at a loss'} (EBIT margin ${(ebit/revenue*100).toFixed(2)}%) — ${netIncome<0 && ebit>=0 ? 'the bottom-line loss is entirely a function of financing cost, not operations.' : ''} This is a critical distinction: an operating view says one thing; a bottom-line view (after the intercompany interest charge — see Group VI) says another. Which one matters depends on whether that intercompany loan is permanent capital structure or a temporary funding bridge.</p>
+    <div class="callout ${distinctionOk?'ok':'warn'}">
+      <span class="tag">${distinctionTag}</span>
+      <p>${distinctionText}</p>
     </div>
 
     <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
@@ -523,6 +558,19 @@ function renderGroup3(){
 }
 
 function renderGroup4(){
+  const {bs, tb} = budgetBsTbRowCounts();
+  const dataExists = bs>0 || tb>0;
+
+  const body = dataExists
+    ? `<div class="callout warn">
+      <span class="tag">Data now exists — ratios not yet wired</span>
+      <p>A Balance Sheet or Trial Balance budget now exists for BU-245 (${bs} Balance Sheet row(s), ${tb} Trial Balance row(s) found live) — this dashboard hasn't yet been extended to compute liquidity ratios from it. This is a "build it now" flag, not a "can't be done" one; the underlying data this page previously said was missing has appeared.</p>
+    </div>`
+    : `<div class="callout warn">
+      <span class="tag">Not computable</span>
+      <p>Liquidity ratios (current ratio, quick ratio, cash conversion cycle) require Balance Sheet data (current assets/liabilities) that doesn't exist for this entity's budget — no Balance Sheet or Trial Balance budget has ever been filed for BU-245. No proxy is meaningful here — Income Statement data alone says nothing about working capital position, and fabricating one would be false precision.</p>
+    </div>`;
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · III</span>
@@ -530,12 +578,9 @@ function renderGroup4(){
       <div class="entity">Akij Air Service Ltd. (AASL) · BU-245</div>
     </div>
 
-    <div class="callout warn">
-      <span class="tag">Not computable</span>
-      <p>Liquidity ratios (current ratio, quick ratio, cash conversion cycle) require Balance Sheet data (current assets/liabilities) that doesn't exist for this entity's budget — no Balance Sheet or Trial Balance budget has ever been filed for BU-245. No proxy is meaningful here — Income Statement data alone says nothing about working capital position, and fabricating one would be false precision.</p>
-    </div>
+    ${body}
 
-    <p class="footnote">Blocked by: no Balance Sheet or Trial Balance budget exists for BU-245 (checked live against bgt.tblBudgetBalanceSheetHeader and bgt.tblBudgetTrialBalance).</p>
+    <p class="footnote">Checked live against bgt.tblBudgetBalanceSheetHeader and bgt.tblBudgetTrialBalance (${bs} / ${tb} rows respectively).</p>
   `;
 }
 
@@ -544,6 +589,19 @@ function renderGroup5(){
   const ebit = budgetSum(rows,'ebit');
   const financial = budgetSum(rows,'financial');
   const coverage = financial ? (ebit/Math.abs(financial)) : null;
+  const feb = financialExpenseBreakdown();
+  const hasThirdParty = feb.hasOtherFinancingSource;
+
+  const thirdPartyValue = hasThirdParty ? fmt(Math.abs(feb.otherAmount)) : 'None found';
+  const coverageNote = coverage===null ? '' :
+    coverage<1
+      ? `An interest coverage ratio below 1.0x is a solvency red flag on its own — operating earnings cover only ${(coverage*100).toFixed(0)}% of the interest bill.`
+      : `An interest coverage ratio of ${coverage.toFixed(2)}x means operating earnings fully cover the interest bill, with ${((coverage-1)*100).toFixed(0)}% headroom — not a solvency concern on this measure alone.`;
+  const intercompanyNote = hasThirdParty
+    ? `This interest is <b>${feb.intercompanyPct.toFixed(0)}% intercompany</b> and <b>${(100-feb.intercompanyPct).toFixed(0)}% from another financing source</b> (verified live — see Group VI) — a mixed funding structure, not a purely related-party one.`
+    : `Combined with the fact this interest is <b>100% intercompany</b> (verified live — see Group VI), this reads less like external credit risk and more like a related-party funding structure absorbing the entity's operating shortfall.`;
+  const calloutClass = (coverage!==null && coverage<1) ? 'warn' : 'ok';
+  const calloutTag = (coverage!==null && coverage<1) ? 'Solvency red flag' : 'Solvency check';
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
@@ -554,12 +612,12 @@ function renderGroup5(){
 
     <div class="kpi-row">
       <div class="kpi"><div class="label">Interest Coverage (EBIT / Interest)</div><div class="value ${coverage!==null && coverage<1 ? 'neg':'pos'}">${coverage!==null ? coverage.toFixed(2)+'x' : 'n/a'}</div></div>
-      <div class="kpi"><div class="label">Third-Party Bank Debt in Budget</div><div class="value">None found</div></div>
+      <div class="kpi"><div class="label">Third-Party Bank Debt in Budget</div><div class="value ${hasThirdParty?'neg':''}">${thirdPartyValue}</div></div>
     </div>
 
-    <div class="callout warn">
-      <span class="tag">Solvency red flag</span>
-      <p>An interest coverage ratio ${coverage!==null && coverage<1 ? 'below 1.0x is a solvency red flag on its own' : 'is shown here'} — operating earnings cover only ${coverage!==null ? (coverage*100).toFixed(0) : 'n/a'}% of the interest bill. Combined with the fact this interest is <b>100% intercompany</b> (verified live — see Group VI), this reads less like external credit risk and more like a related-party funding structure absorbing the entity's operating shortfall.</p>
+    <div class="callout ${calloutClass}">
+      <span class="tag">${calloutTag}</span>
+      <p>${coverageNote} ${intercompanyNote}</p>
     </div>
 
     <p class="footnote">True leverage ratios (Debt/Equity) need Balance Sheet data, unavailable for this entity. Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245.</p>
@@ -587,6 +645,10 @@ function renderGroup7(){
   const taxTotal = budgetSum(rows,'tax');
   const totalCosts = Math.abs(fixedTotal)+Math.abs(commissionTotal)+Math.abs(taxTotal);
   const fixedPct = totalCosts ? (Math.abs(fixedTotal)/totalCosts*100) : 0;
+  const leverageProfile = fixedPct >= 55 ? 'a high operating leverage profile' : fixedPct >= 25 ? 'a moderate operating leverage profile' : 'a low operating leverage profile';
+  const leverageImplication = fixedPct >= 25
+    ? `costs don't scale down when revenue is seasonally low, so low-season months absorb the full fixed-cost burden.`
+    : `most cost naturally scales with revenue, so low-season months aren't left carrying a large fixed-cost burden.`;
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
@@ -608,7 +670,7 @@ function renderGroup7(){
     ])}</div>
     <div class="callout">
       <span class="tag">Finding</span>
-      <p>~${fixedPct.toFixed(0)}% of total costs are fixed (BDT ${fmt(Math.abs(fixedTotal))} annualized), the rest is commission that tracks revenue almost linearly. This is a moderate operating leverage profile for a service/agency business — costs don't scale down when revenue is seasonally low, so low-season months absorb the full fixed-cost burden.</p>
+      <p>~${fixedPct.toFixed(0)}% of total costs are fixed (BDT ${fmt(Math.abs(fixedTotal))} annualized), the rest is commission that tracks revenue almost linearly. This is ${leverageProfile} for a service/agency business — ${leverageImplication}</p>
     </div>
 
     <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
@@ -616,6 +678,18 @@ function renderGroup7(){
 }
 
 function renderGroup8(){
+  const feb = financialExpenseBreakdown();
+  const hasThirdParty = feb.hasOtherFinancingSource;
+  const pct = feb.intercompanyPct;
+
+  const tag = hasThirdParty ? `Flag — ${pct.toFixed(0)}% of Financial Expense is intercompany` : 'Flag — 100% of Financial Expense is intercompany';
+  const finding = hasThirdParty
+    ? `Verified directly against the sub-ledger: <b>${pct.toFixed(0)}%</b> of the Financial Expenses budget (BDT ${fmt(Math.abs(feb.intercompanyAmount))}) is tagged to the intercompany interest sub-GL, with the remaining <b>${(100-pct).toFixed(0)}%</b> (BDT ${fmt(Math.abs(feb.otherAmount))}) coming from a different financing source. This budget is no longer purely related-party financed — a mix worth understanding before drawing conclusions from either side alone.`
+    : `Verified directly against the sub-ledger: the entire Financial Expenses budget line (sub-GL <span class="mono">21906</span>) is literally named <b>"Inter Company Interest Expense"</b> — there is no third-party bank debt sub-GL in this budget at all. This means:`;
+  const implication = hasThirdParty
+    ? `Whether the intercompany portion's rate is appropriate, and how the other financing source compares, are both worth a related-party disclosure review.`
+    : `The entity's entire financing cost is a related-party charge, set by whatever intercompany lending terms Akij Group/Resources has established internally — not an arm's-length market rate. Whether that rate/amount is appropriate, and whether it's what tips an operationally-profitable entity (Group II) into a net loss, is exactly the kind of line a related-party disclosure review should examine.`;
+
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
       <span class="eyebrow">Finance · VI</span>
@@ -624,9 +698,9 @@ function renderGroup8(){
     </div>
 
     <div class="callout warn">
-      <span class="tag">Flag — 100% of Financial Expense is intercompany</span>
-      <p>Verified directly against the sub-ledger: the entire Financial Expenses budget line (sub-GL <span class="mono">21906</span>) is literally named <b>"Inter Company Interest Expense"</b> — there is no third-party bank debt sub-GL in this budget at all. This means:</p>
-      <p>The entity's entire financing cost is a related-party charge, set by whatever intercompany lending terms Akij Group/Resources has established internally — not an arm's-length market rate. Whether that rate/amount is appropriate, and whether it's what tips an operationally-profitable entity (Group II) into a net loss, is exactly the kind of line a related-party disclosure review should examine.</p>
+      <span class="tag">${tag}</span>
+      <p>${finding}</p>
+      <p>${implication}</p>
     </div>
 
     <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow joined to fin.tblAccountingJournal for sub-GL naming, iBOSDDD, BU-245 — verified live.</p>
@@ -638,8 +712,16 @@ function renderGroup9(){
   const ratios = rows.map(r=> r.revenue ? Math.abs(r.tax)/r.revenue*100 : 0);
   const s = stats(ratios);
   const minR = Math.min(...ratios), maxR = Math.max(...ratios);
+  const bandWidth = maxR - minR;
+  const isTightBand = bandWidth < 0.05;
   const taxTotal = budgetSum(rows,'tax');
   const ebt = budgetSum(rows,'ebt');
+
+  const tag = isTightBand ? 'Finding — corrected from initial read' : 'Finding — variable tax ratio';
+  const finding = isTightBand
+    ? `Tax expense sits in a tight <b>${minR.toFixed(3)}%–${maxR.toFixed(3)}% of monthly revenue</b> band (computed live across all 12 months) — that tightness is the opposite of what a random placeholder guess would look like. This reads as a genuine <b>turnover-based minimum tax / AIT calculation</b> (a small percentage of gross receipts), not a flat guess. Worth confirming with the tax team exactly which NBR provision this maps to, and whether standard corporate tax (25–27.5%) would also apply on top in a profitable year — currently moot since EBT is negative.`
+    : `Tax expense ranges from <b>${minR.toFixed(3)}%</b> to <b>${maxR.toFixed(3)}% of monthly revenue</b> (computed live across all 12 months) — variable enough that this no longer looks like a flat turnover-based charge. This is more consistent with a real profit/loss-responsive tax calculation. Worth confirming the exact computation and NBR provision with the tax team.`;
+  const calloutClass = isTightBand ? 'ok' : 'warn';
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
@@ -654,9 +736,9 @@ function renderGroup9(){
       <div class="kpi"><div class="label">Tax as % of Revenue, monthly range</div><div class="value">${minR.toFixed(3)}%–${maxR.toFixed(3)}%</div></div>
     </div>
 
-    <div class="callout ok">
-      <span class="tag">Finding — corrected from initial read</span>
-      <p>Tax expense sits in a tight <b>${minR.toFixed(3)}%–${maxR.toFixed(3)}% of monthly revenue</b> band (computed live across all 12 months) — that tightness is the opposite of what a random placeholder guess would look like. This reads as a genuine <b>turnover-based minimum tax / AIT calculation</b> (a small percentage of gross receipts), not a flat guess. Worth confirming with the tax team exactly which NBR provision this maps to, and whether standard corporate tax (25–27.5%) would also apply on top in a profitable year — currently moot since EBT is negative.</p>
+    <div class="callout ${calloutClass}">
+      <span class="tag">${tag}</span>
+      <p>${finding}</p>
     </div>
 
     <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
@@ -672,12 +754,23 @@ function renderGroup10(){
     'Depreciation': rows.map(r=>r.depreciation),
     'Selling Salary+Bonus': rows.map(r=>r.sellingFixed),
   };
+  const flatFlags = {};
   const flatnessRows = Object.keys(fixedSeries).map(label=>{
     const s = stats(fixedSeries[label]);
     const flat = s.sd < 1;
+    flatFlags[label] = flat;
     return `<tr><td>${label}</td><td>${fmt(s.mean)}</td><td>${flat?'Yes — identical every month':'No'}</td></tr>`;
   }).join('');
   const revStats = stats(rows.map(r=>r.revenue));
+  const flatCount = Object.values(flatFlags).filter(Boolean).length;
+  const totalLines = Object.keys(flatFlags).length;
+  const allFlat = flatCount === totalLines;
+
+  const tag = allFlat ? 'Finding — planning gap' : 'Finding — partial planning gap';
+  const calloutClass = allFlat ? 'warn' : 'ok';
+  const finding = allFlat
+    ? `The fixed-cost lines above are identical to the decimal across all 12 months (annual figure ÷ 12), while revenue swings ${(revStats.cov*100).toFixed(0)}% (CoV) between peak and trough months. Only commission (tied mechanically to revenue) and tax vary at all. This means the budget's monthly net income swings are driven <b>entirely by revenue seasonality, with zero cost-side seasonality modeling</b> — if the business genuinely has seasonal cost drivers (e.g. marketing spend ramp before peak season), the budget doesn't reflect it.`
+    : `${flatCount} of ${totalLines} fixed-cost lines are identical every month, but <b>${totalLines-flatCount} line(s) show real month-to-month variation</b> — meaning some genuine cost-side seasonality has been modeled into this budget, unlike a pure annual-run-rate division. Worth checking whether the varying line(s) reflect deliberate planning (e.g. a marketing ramp) or a data artifact.`;
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
@@ -696,9 +789,9 @@ function renderGroup10(){
       ${flatnessRows}
     </table></div>
 
-    <div class="callout warn">
-      <span class="tag">Finding — planning gap</span>
-      <p>The fixed-cost lines above are identical to the decimal across all 12 months (annual figure ÷ 12), while revenue swings ${(revStats.cov*100).toFixed(0)}% (CoV) between peak and trough months. Only commission (tied mechanically to revenue) and tax vary at all. This means the budget's monthly net income swings are driven <b>entirely by revenue seasonality, with zero cost-side seasonality modeling</b> — if the business genuinely has seasonal cost drivers (e.g. marketing spend ramp before peak season), the budget doesn't reflect it.</p>
+    <div class="callout ${calloutClass}">
+      <span class="tag">${tag}</span>
+      <p>${finding}</p>
     </div>
 
     <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
@@ -716,6 +809,11 @@ function renderGroup11(){
   const h2avg = budgetSum(h2,'revenue')/6;
   const commissionRatios = rows.map(r=> r.revenue ? Math.abs(r.sellingCommission)/r.revenue : 0);
   const commStats = stats(commissionRatios);
+  const h1h2Gap = h1avg/h2avg*100-100;
+  const isStronglyBimodal = Math.abs(h1h2Gap) > 15;
+  const seasonalFinding = isStronglyBimodal
+    ? `Revenue has a clear bimodal seasonal pattern (H1 running ${h1h2Gap.toFixed(0)}% above H2); costs have none (Group VIII). This mismatch is the primary driver of monthly margin volatility, not any underlying cost inefficiency.`
+    : `Revenue shows only a mild seasonal skew (H1 ${h1h2Gap>=0?'running':'trailing'} ${Math.abs(h1h2Gap).toFixed(0)}% ${h1h2Gap>=0?'above':'below'} H2) — not pronounced enough to call this a strongly bimodal pattern. Margin volatility here is more likely month-to-month noise than a structural seasonal effect.`;
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
@@ -735,7 +833,7 @@ function renderGroup11(){
 
     <div class="callout">
       <span class="tag">Finding</span>
-      <p>Revenue has a clear bimodal seasonal pattern (H1 running ${(h1avg/h2avg*100-100).toFixed(0)}% above H2); costs have none (Group VIII). This mismatch is the primary driver of monthly margin volatility, not any underlying cost inefficiency. Commission ratio is mechanically stable (${(commStats.cov*100).toFixed(1)}% CoV) since it's a near-fixed percentage of revenue.</p>
+      <p>${seasonalFinding} Commission ratio is mechanically stable (${(commStats.cov*100).toFixed(1)}% CoV) since it's a near-fixed percentage of revenue.</p>
     </div>
 
     <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live.</p>
@@ -748,11 +846,55 @@ function renderGroup12(){
   const fixedTotal = budgetSum(rows,'sellingFixed')+budgetSum(rows,'marketing')+budgetSum(rows,'admin')+budgetSum(rows,'financial')+budgetSum(rows,'depreciation');
   const commissionTotal = budgetSum(rows,'sellingCommission');
   const commissionRatio = revenue ? Math.abs(commissionTotal)/revenue : 0;
+  const taxRatios = rows.map(r=> r.revenue ? Math.abs(r.tax)/r.revenue*100 : 0);
+  const minR = Math.min(...taxRatios), maxR = Math.max(...taxRatios);
   const taxRatio = revenue ? Math.abs(budgetSum(rows,'tax'))/revenue : 0;
   const breakeven = (1 - commissionRatio - taxRatio) ? Math.abs(fixedTotal)/(1 - commissionRatio - taxRatio) : null;
   const ebit = budgetSum(rows,'ebit');
   const financial = budgetSum(rows,'financial');
   const coverage = financial ? (ebit/Math.abs(financial)) : null;
+  const feb = financialExpenseBreakdown();
+
+  const fixedSeries = {
+    'Administrative Expenses': rows.map(r=>r.admin),
+    'Marketing Expenses': rows.map(r=>r.marketing),
+    'Financial Expenses': rows.map(r=>r.financial),
+    'Depreciation': rows.map(r=>r.depreciation),
+    'Selling Salary+Bonus': rows.map(r=>r.sellingFixed),
+  };
+  const flatFlagList = Object.keys(fixedSeries).map(label=>stats(fixedSeries[label]).sd < 1);
+  const allFlat = flatFlagList.every(Boolean);
+  const flatCount = flatFlagList.filter(Boolean).length;
+
+  const flags = [];
+  if(allFlat){
+    flags.push('Perfectly flat, non-seasonal fixed costs across all 12 months (Group VIII) — suggests top-down annual-run-rate budgeting rather than granular operational planning.');
+  } else if(flatCount>0){
+    flags.push(`${flatCount} of ${flatFlagList.length} fixed-cost lines are perfectly flat across all 12 months (Group VIII) — a partial planning gap, less severe than if every line were flat.`);
+  }
+  if(feb.hasOtherFinancingSource){
+    flags.push(`${feb.intercompanyPct.toFixed(0)}% related-party interest expense, with the remainder from another financing source (Group VI) — verified live. Worth confirming the terms of the non-intercompany portion too.`);
+  } else {
+    flags.push('100% related-party interest expense (Group VI) — verified, no third-party financing in this budget at all. Concentration and governance risk.');
+  }
+  if(coverage!==null && coverage<1){
+    flags.push(`Interest coverage of ${coverage.toFixed(2)}x (Group IV) — the entity cannot cover its budgeted financing cost from operations, before any downside scenario is applied.`);
+  } else if(coverage!==null){
+    flags.push(`Interest coverage of ${coverage.toFixed(2)}x (Group IV) is above 1.0x — operations can currently cover the financing cost, though the concentration in a single related-party lender still warrants monitoring.`);
+  }
+  const taxBandTight = (maxR-minR) < 0.05;
+  flags.push(`Tax expense sits in a ${taxBandTight?'tight':'wide'} ${minR.toFixed(3)}%–${maxR.toFixed(3)}% of-revenue band (Group VII) — ${taxBandTight ? 'reframed from "placeholder" to "likely a turnover-based minimum tax," but still worth confirming with the tax team.' : 'variable enough to suggest a real profit-responsive tax calculation rather than a flat turnover charge — confirm the exact method with the tax team.'}`);
+  if(breakeven!==null){
+    if(revenue < breakeven){
+      flags.push(`Budgeted revenue (${fmt(revenue)}) sits below the calculated breakeven point (~${fmt(breakeven)}) — meaning even before any adverse variance, the budget itself is not breakeven-achieving.`);
+    } else {
+      const marginOfSafety = ((revenue-breakeven)/revenue*100);
+      flags.push(`Budgeted revenue (${fmt(revenue)}) sits above the calculated breakeven point (~${fmt(breakeven)}) — a margin of safety of ${marginOfSafety.toFixed(1)}%, worth watching but not currently a red flag.`);
+    }
+  }
+  flags.push('No COGS line for what is fundamentally a ticketing/travel agency cost business — all cost is bucketed into SG&A-style overheads (Selling/Marketing/Admin) rather than a distinct cost-of-service line, limiting visibility into true unit economics per ticket/booking.');
+
+  const flagRows = flags.map((f,i)=>`<tr><td>${i+1}</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">${f}</td></tr>`).join('');
 
   document.getElementById('main').innerHTML = `
     <div class="pagehead">
@@ -763,15 +905,10 @@ function renderGroup12(){
 
     <div class="tablewrap"><table>
       <tr><th style="text-align:left;">#</th><th style="text-align:left;">Red Flag</th></tr>
-      <tr><td>1</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">Perfectly flat, non-seasonal fixed costs across all 12 months (Group VIII) — suggests top-down annual-run-rate budgeting rather than granular operational planning.</td></tr>
-      <tr><td>2</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">100% related-party interest expense (Group VI) — verified, no third-party financing in this budget at all. Concentration and governance risk.</td></tr>
-      <tr><td>3</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">Interest coverage of ${coverage!==null ? coverage.toFixed(2)+'x' : 'n/a'} (Group IV) — the entity cannot cover its budgeted financing cost from operations, before any downside scenario is applied.</td></tr>
-      <tr><td>4</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">Tax expense sits in a tight ${'~0.04%'} of-revenue band (Group VII) — reframed from "placeholder" to "likely a turnover-based minimum tax," but still worth confirming with the tax team.</td></tr>
-      <tr><td>5</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">Budgeted revenue (${fmt(revenue)}) sits below the calculated breakeven point (~${breakeven?fmt(breakeven):'n/a'}) — meaning even before any adverse variance, the budget itself is not breakeven-achieving.</td></tr>
-      <tr><td>6</td><td style="text-align:left; white-space:normal; font-family:'Iowan Old Style',Georgia,serif; font-size:13px;">No COGS line for what is fundamentally a ticketing/travel agency cost business — all cost is bucketed into SG&amp;A-style overheads (Selling/Marketing/Admin) rather than a distinct cost-of-service line, limiting visibility into true unit economics per ticket/booking.</td></tr>
+      ${flagRows}
     </table></div>
 
-    <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live. Breakeven = Fixed Costs ÷ (1 − Commission Ratio − Tax Ratio), all computed live from the current budget.</p>
+    <p class="footnote">Source: bgt.tblBudgetIncomeExpenseRow, iBOSDDD, BU-245, live. Breakeven = Fixed Costs ÷ (1 − Commission Ratio − Tax Ratio), all computed live from the current budget. This list re-evaluates its wording (and which flags appear at all) from live figures on every load — it is not a fixed list.</p>
   `;
 }
 
